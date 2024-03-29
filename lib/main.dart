@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logger/logger.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/crossfade_state.dart';
@@ -8,23 +10,29 @@ import 'package:spotify_sdk/models/image_uri.dart';
 import 'package:spotify_sdk/models/player_context.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
+
 import 'widgets/sized_icon_button.dart';
 
 String clientId = "b56ad9c2cf434b748466bb6adbb511ca";
 String redirectURL = "https://www.rubycurehealthtourism.com/";
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await SpotifySdk.connectToSpotifyRemote(
-      clientId: "b56ad9c2cf434b748466bb6adbb511ca",
-      redirectUrl: "https://www.rubycurehealthtourism.com/",
-    ).then((value) => runApp(Home()));
+            clientId: "b56ad9c2cf434b748466bb6adbb511ca",
+            redirectUrl: "https://www.rubycurehealthtourism.com/")
+        .then((value) => runApp(Home()));
   } catch (e) {
     print("Spotify girişe izin vermedi.");
   }
+  // await dotenv.load(
+  //     fileName:
+  //         '.env'); // **********************************************************************
 }
 
+/// A [StatefulWidget] which uses:
+/// * [spotify_sdk](https://pub.dev/packages/spotify_sdk)
+/// to connect to Spotify and use controls.
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
 
@@ -36,12 +44,13 @@ class _HomeState extends State<Home> {
   bool _loading = false;
   bool _connected = false;
   final Logger _logger = Logger(
+    //filter: CustomLogFilter(), // custom logfilter can be used to have logs in release mode
     printer: PrettyPrinter(
-      methodCount: 2,
-      errorMethodCount: 8,
-      lineLength: 120,
-      colors: true,
-      printEmojis: true,
+      methodCount: 2, // number of method calls to be displayed
+      errorMethodCount: 8, // number of method calls if stacktrace is provided
+      lineLength: 120, // width of the output
+      colors: true, // Colorful log messages
+      printEmojis: true, // Print an emoji for each log message
       printTime: true,
     ),
   );
@@ -255,13 +264,24 @@ class _HomeState extends State<Home> {
                       weight: 50,
                     )),
                 playerState.isPaused
+                    // ? SizedIconButton(
+                    //     width: 50,
+                    //     icon: Icons.play_arrow,
+                    //     onPressed: resume,
+                    //   )
                     ? IconButton(
                         onPressed: resume,
                         icon: const Icon(
                           Icons.play_arrow,
                           weight: 50,
                         ))
-                    : IconButton(
+                    :
+                    // : SizedIconButton(
+                    //     width: 50,
+                    //     icon: Icons.pause,
+                    //     onPressed: pause,
+                    //   ),
+                    IconButton(
                         onPressed: pause,
                         icon: const Icon(
                           Icons.pause,
@@ -639,8 +659,10 @@ class _HomeState extends State<Home> {
     try {
       var isActive = await SpotifySdk.isSpotifyAppActive;
       final snackBar = SnackBar(
-        content: Text('Spotify app is active: $isActive'),
-      );
+          content: Text(isActive
+              ? 'Spotify app connection is active (currently playing)'
+              : 'Spotify app connection is not active (currently not playing)'));
+
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     } on PlatformException catch (e) {
       setStatus(e.code, message: e.message);
@@ -651,35 +673,6 @@ class _HomeState extends State<Home> {
 
   void setStatus(String code, {String? message}) {
     var text = message ?? '';
-    if (message == null) {
-      var errorCode = code;
-      text = 'Error occurred: Code $errorCode';
-    }
-    _logger.i(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-      ),
-    );
-  }
-}
-
-class SearchResults extends StatelessWidget {
-  final List results;
-
-  const SearchResults({Key? key, required this.results}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        final result = results[index];
-        return ListTile(
-          title: Text(result.name),
-          subtitle: Text(result.uri),
-        );
-      },
-    );
+    _logger.i('$code$text');
   }
 }
