@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
+import 'package:spotify_project/main.dart';
 
 import 'package:spotify_sdk/spotify_sdk.dart';
 
@@ -223,6 +224,29 @@ class BusinessLogic {
       setStatus(e.code, message: e.message);
     } on MissingPluginException {
       setStatus('not implemented');
+    }
+  }
+
+  bool _loading = false;
+  Future<void> connectToSpotifyRemote() async {
+    BusinessLogic _businessLogic = BusinessLogic();
+    try {
+      _loading = true;
+
+      var result = await SpotifySdk.connectToSpotifyRemote(
+          clientId: clientId, redirectUrl: redirectURL);
+      _businessLogic.setStatus(result
+          ? 'connect to spotify successful'
+          : 'connect to spotify failed');
+      _loading = false;
+    } on PlatformException catch (e) {
+      _loading = false;
+
+      _businessLogic.setStatus(e.code, message: e.message);
+    } on MissingPluginException {
+      _loading = false;
+
+      _businessLogic.setStatus('not implemented');
     }
   }
 }
