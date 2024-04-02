@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logger/logger.dart';
+import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/crossfade_state.dart';
 import 'package:spotify_sdk/models/image_uri.dart';
@@ -11,28 +11,19 @@ import 'package:spotify_sdk/models/player_context.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
-import 'widgets/sized_icon_button.dart';
-
 String clientId = "b56ad9c2cf434b748466bb6adbb511ca";
 String redirectURL = "https://www.rubycurehealthtourism.com/";
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await SpotifySdk.connectToSpotifyRemote(
-            clientId: "b56ad9c2cf434b748466bb6adbb511ca",
-            redirectUrl: "https://www.rubycurehealthtourism.com/")
-        .then((value) => runApp(Home()));
+            clientId: clientId, redirectUrl: redirectURL)
+        .then((value) => runApp(const Home()));
   } catch (e) {
     print("Spotify girişe izin vermedi.");
   }
-  // await dotenv.load(
-  //     fileName:
-  //         '.env'); // **********************************************************************
 }
 
-/// A [StatefulWidget] which uses:
-/// * [spotify_sdk](https://pub.dev/packages/spotify_sdk)
-/// to connect to Spotify and use controls.
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
 
@@ -41,8 +32,19 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  @override
+  void initState() {
+    connectToSpotifyRemote();
+    _businessLogic.getAccessToken(clientId, redirectURL);
+
+    super.initState();
+  }
+
   bool _loading = false;
   bool _connected = false;
+  final double _sliderDurationMusic = 50.0;
+  double _sliderVolume = 0.5;
+
   final Logger _logger = Logger(
     //filter: CustomLogFilter(), // custom logfilter can be used to have logs in release mode
     printer: PrettyPrinter(
@@ -57,6 +59,7 @@ class _HomeState extends State<Home> {
 
   CrossfadeState? crossfadeState;
   late ImageUri? currentTrackImageUri;
+  BusinessLogic _businessLogic = BusinessLogic();
 
   @override
   Widget build(BuildContext context) {
@@ -70,78 +73,21 @@ class _HomeState extends State<Home> {
             _connected = data.connected;
           }
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('SpotifySdk Example'),
-              actions: [
-                _connected
-                    ? IconButton(
-                        onPressed: disconnect,
-                        icon: const Icon(Icons.exit_to_app),
-                      )
-                    : Container()
-              ],
-            ),
-            body: _sampleFlowWidget(context),
-            bottomNavigationBar: _connected ? _buildBottomBar(context) : null,
+            body: mainScreen(context),
+            // bottomNavigationBar: _connected ? _buildBottomBar(context) : null,
           );
         },
       ),
     );
   }
 
-  Widget _buildBottomBar(BuildContext context) {
-    return BottomAppBar(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              SizedIconButton(
-                width: 50,
-                icon: Icons.queue_music,
-                onPressed: queue,
-              ),
-              SizedIconButton(
-                width: 50,
-                icon: Icons.playlist_play,
-                onPressed: play,
-              ),
-              SizedIconButton(
-                width: 50,
-                icon: Icons.repeat,
-                onPressed: toggleRepeat,
-              ),
-              SizedIconButton(
-                width: 50,
-                icon: Icons.shuffle,
-                onPressed: toggleShuffle,
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              SizedIconButton(
-                width: 50,
-                onPressed: addToLibrary,
-                icon: Icons.favorite,
-              ),
-              SizedIconButton(
-                width: 50,
-                onPressed: () => checkIfAppIsActive(context),
-                icon: Icons.info,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sampleFlowWidget(BuildContext context2) {
+// BODY OF THE APPLICATION
+  Widget mainScreen(BuildContext context2) {
     return Stack(
       children: [
+        Container(
+          color: Color.fromARGB(255, 176, 255, 233),
+        ),
         ListView(
           padding: const EdgeInsets.all(8),
           children: [
@@ -152,79 +98,13 @@ class _HomeState extends State<Home> {
                   onPressed: connectToSpotifyRemote,
                   child: const Icon(Icons.settings_remote),
                 ),
-                TextButton(
-                  onPressed: getAccessToken,
-                  child: const Text(
-                    'get auth token ',
-                    style: TextStyle(fontSize: 50),
-                  ),
-                ),
               ],
             ),
-            const Divider(),
-            const Text(
-              'Player State',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
             _connected
-                ? _buildPlayerStateWidget()
+                ? homeScreenWidget()
                 : const Center(
                     child: Text('Not connected'),
                   ),
-            const Divider(),
-            const Text(
-              'Player Context',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            _connected
-                ? _buildPlayerContextWidget()
-                : const Center(
-                    child: Text('Not connected'),
-                  ),
-            const Divider(),
-            const Text(
-              'Player Api',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Row(
-              children: <Widget>[
-                TextButton(
-                  onPressed: seekTo,
-                  child: const Text('seek to 20000ms'),
-                ),
-                TextButton(
-                  onPressed: seekToRelative,
-                  child: const Text('seek to relative 20000ms'),
-                ),
-              ],
-            ),
-            const Divider(),
-            const Text(
-              'Crossfade State',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            ElevatedButton(
-              onPressed: getCrossfadeState,
-              child: const Text(
-                'get crossfade state',
-              ),
-            ),
-            // ignore: prefer_single_quotes
-            Text("Is enabled: ${crossfadeState?.isEnabled}"),
-            // ignore: prefer_single_quotes
-            Text("Duration: ${crossfadeState?.duration}"),
           ],
         ),
         _loading
@@ -236,12 +116,13 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildPlayerStateWidget() {
+  Widget homeScreenWidget() {
     return StreamBuilder<PlayerState>(
       stream: SpotifySdk.subscribePlayerState(),
       builder: (BuildContext context, AsyncSnapshot<PlayerState> snapshot) {
         var track = snapshot.data?.track;
         currentTrackImageUri = track?.imageUri;
+
         var playerState = snapshot.data;
 
         if (playerState == null || track == null) {
@@ -254,114 +135,61 @@ class _HomeState extends State<Home> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                IconButton(
-                    onPressed: skipPrevious,
-                    icon: Icon(
-                      Icons.skip_previous,
-                      weight: 50,
-                    )),
-                playerState.isPaused
-                    // ? SizedIconButton(
-                    //     width: 50,
-                    //     icon: Icons.play_arrow,
-                    //     onPressed: resume,
-                    //   )
-                    ? IconButton(
-                        onPressed: resume,
-                        icon: const Icon(
-                          Icons.play_arrow,
-                          weight: 50,
-                        ))
-                    :
-                    // : SizedIconButton(
-                    //     width: 50,
-                    //     icon: Icons.pause,
-                    //     onPressed: pause,
-                    //   ),
-                    IconButton(
-                        onPressed: pause,
-                        icon: const Icon(
-                          Icons.pause,
-                          weight: 50,
-                        )),
-                IconButton(
-                    onPressed: skipNext,
-                    icon: const Icon(
-                      Icons.skip_next,
-                      weight: 50,
-                    )),
-              ],
-            ),
-            Text(
-                '${track.name} by ${track.artist.name} from the album ${track.album.name}'),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Playback speed: ${playerState.playbackSpeed}'),
-                Text(
-                    'Progress: ${playerState.playbackPosition}ms/${track.duration}ms'),
+                // PLAYBACK DAKIKASI BURDA
+                // Text(
+                //     'Progress: ${playerState.playbackPosition}ms/${track.duration}ms'),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Paused: ${playerState.isPaused}'),
-                Text('Shuffling: ${playerState.playbackOptions.isShuffling}'),
-              ],
-            ),
-            Text('RepeatMode: ${playerState.playbackOptions.repeatMode}'),
-            Text('Image URI: ${track.imageUri.raw}'),
-            Text('Is episode? ${track.isEpisode}'),
-            Text('Is podcast? ${track.isPodcast}'),
             _connected
                 ? spotifyImageWidget(track.imageUri)
                 : const Text('Connect to see an image...'),
             Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Divider(),
-                const Text(
-                  'Set Shuffle and Repeat',
-                  style: TextStyle(fontSize: 16),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height / 80,
                 ),
-                Row(
-                  children: [
-                    const Text(
-                      'Repeat Mode:',
-                    ),
-                    DropdownButton<RepeatMode>(
-                      value: RepeatMode
-                          .values[playerState.playbackOptions.repeatMode.index],
-                      items: const [
-                        DropdownMenuItem(
-                          value: RepeatMode.off,
-                          child: Text('off'),
-                        ),
-                        DropdownMenuItem(
-                          value: RepeatMode.track,
-                          child: Text('track'),
-                        ),
-                        DropdownMenuItem(
-                          value: RepeatMode.context,
-                          child: Text('context'),
-                        ),
-                      ],
-                      onChanged: (repeatMode) => setRepeatMode(repeatMode!),
-                    ),
-                  ],
+
+                // ********************************* ŞARKI VE SANATÇI İSMİ *************************************************
+                Text(
+                  '${track.artist.name} - ${track.name} ',
+                  style: TextStyle(fontSize: 22),
                 ),
+
                 Row(
-                  children: [
-                    const Text('Set shuffle: '),
-                    Switch.adaptive(
-                      value: playerState.playbackOptions.isShuffling,
-                      onChanged: (bool shuffle) => setShuffle(
-                        shuffle,
-                      ),
-                    ),
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    IconButton(
+                        onPressed: _businessLogic.skipPrevious,
+                        icon: const Icon(
+                          Icons.skip_previous,
+                          weight: 50,
+                        )),
+                    playerState.isPaused
+                        ? IconButton(
+                            onPressed: _businessLogic.resume,
+                            icon: const Icon(
+                              Icons.play_arrow,
+                              weight: 50,
+                            ))
+                        : IconButton(
+                            onPressed: () {
+                              _businessLogic.pause();
+                              setState(() {});
+                            },
+                            icon: const Icon(
+                              Icons.pause,
+                              weight: 50,
+                            )),
+                    IconButton(
+                        onPressed: _businessLogic.skipNext,
+                        icon: const Icon(
+                          Icons.skip_next,
+                          weight: 50,
+                        )),
                   ],
                 ),
               ],
@@ -382,18 +210,9 @@ class _HomeState extends State<Home> {
           return const Center(
             child: Text('Not connected'),
           );
+        } else {
+          return const SizedBox();
         }
-
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Title: ${playerContext.title}'),
-            Text('Subtitle: ${playerContext.subtitle}'),
-            Text('Type: ${playerContext.type}'),
-            Text('Uri: ${playerContext.uri}'),
-          ],
-        );
       },
     );
   }
@@ -406,9 +225,13 @@ class _HomeState extends State<Home> {
         ),
         builder: (BuildContext context, AsyncSnapshot<Uint8List?> snapshot) {
           if (snapshot.hasData) {
-            return Image.memory(snapshot.data!);
+            return Padding(
+              padding:
+                  EdgeInsets.only(top: MediaQuery.of(context).size.height / 11),
+              child: Image.memory(snapshot.data!),
+            );
           } else if (snapshot.hasError) {
-            setStatus(snapshot.error.toString());
+            _businessLogic.setStatus(snapshot.error.toString());
             return SizedBox(
               width: ImageDimension.large.value.toDouble(),
               height: ImageDimension.large.value.toDouble(),
@@ -424,13 +247,17 @@ class _HomeState extends State<Home> {
         });
   }
 
+  //********************************************************** AŞAĞISI YALNIZCA BUSINESS LOGIC.  ***************************************************************** */
+
+  // Hesapla bağlantıyı ve senkronizasyonu kesen fonksiyon.
   Future<void> disconnect() async {
     try {
       setState(() {
         _loading = true;
       });
       var result = await SpotifySdk.disconnect();
-      setStatus(result ? 'disconnect successful' : 'disconnect failed');
+      _businessLogic
+          .setStatus(result ? 'disconnect successful' : 'disconnect failed');
       setState(() {
         _loading = false;
       });
@@ -438,12 +265,12 @@ class _HomeState extends State<Home> {
       setState(() {
         _loading = false;
       });
-      setStatus(e.code, message: e.message);
+      _businessLogic.setStatus(e.code, message: e.message);
     } on MissingPluginException {
       setState(() {
         _loading = false;
       });
-      setStatus('not implemented');
+      _businessLogic.setStatus('not implemented');
     }
   }
 
@@ -454,7 +281,7 @@ class _HomeState extends State<Home> {
       });
       var result = await SpotifySdk.connectToSpotifyRemote(
           clientId: clientId, redirectUrl: redirectURL);
-      setStatus(result
+      _businessLogic.setStatus(result
           ? 'connect to spotify successful'
           : 'connect to spotify failed');
       setState(() {
@@ -464,215 +291,26 @@ class _HomeState extends State<Home> {
       setState(() {
         _loading = false;
       });
-      setStatus(e.code, message: e.message);
+      _businessLogic.setStatus(e.code, message: e.message);
     } on MissingPluginException {
       setState(() {
         _loading = false;
       });
-      setStatus('not implemented');
+      _businessLogic.setStatus('not implemented');
     }
   }
+}
 
-  Future<String> getAccessToken() async {
-    try {
-      var authenticationToken = await SpotifySdk.getAccessToken(
-          clientId: clientId,
-          redirectUrl: redirectURL,
-          scope: 'app-remote-control, '
-              'user-modify-playback-state, '
-              'playlist-read-private, '
-              'playlist-modify-public,user-read-currently-playing');
-      setStatus('Got a token: $authenticationToken');
-      return authenticationToken;
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-      return Future.error('$e.code: $e.message');
-    } on MissingPluginException {
-      setStatus('not implemented');
-      return Future.error('not implemented');
-    }
-  }
+class Everything extends StatefulWidget {
+  const Everything({super.key});
 
-  Future getPlayerState() async {
-    try {
-      return await SpotifySdk.getPlayerState();
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
+  @override
+  State<Everything> createState() => _EverythingState();
+}
 
-  Future getCrossfadeState() async {
-    try {
-      var crossfadeStateValue = await SpotifySdk.getCrossFadeState();
-      setState(() {
-        crossfadeState = crossfadeStateValue;
-      });
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> queue() async {
-    try {
-      await SpotifySdk.queue(
-          spotifyUri: 'spotify:track:58kNJana4w5BIjlZE2wq5m');
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> toggleRepeat() async {
-    try {
-      await SpotifySdk.toggleRepeat();
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> setRepeatMode(RepeatMode repeatMode) async {
-    try {
-      await SpotifySdk.setRepeatMode(
-        repeatMode: repeatMode,
-      );
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> setShuffle(bool shuffle) async {
-    try {
-      await SpotifySdk.setShuffle(
-        shuffle: shuffle,
-      );
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> toggleShuffle() async {
-    try {
-      await SpotifySdk.toggleShuffle();
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> play() async {
-    try {
-      await SpotifySdk.play(spotifyUri: 'spotify:track:58kNJana4w5BIjlZE2wq5m');
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> pause() async {
-    try {
-      await SpotifySdk.pause();
-      setState(() {});
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> resume() async {
-    try {
-      await SpotifySdk.resume();
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> skipNext() async {
-    try {
-      await SpotifySdk.skipNext();
-      print("Skip to the next song");
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> skipPrevious() async {
-    try {
-      await SpotifySdk.skipPrevious();
-      print("Skip to the previous song.");
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> seekTo() async {
-    try {
-      await SpotifySdk.seekTo(positionedMilliseconds: 20000);
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> seekToRelative() async {
-    try {
-      await SpotifySdk.seekToRelativePosition(relativeMilliseconds: 20000);
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> addToLibrary() async {
-    try {
-      await SpotifySdk.addToLibrary(
-          spotifyUri: 'spotify:track:58kNJana4w5BIjlZE2wq5m');
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  Future<void> checkIfAppIsActive(BuildContext context) async {
-    try {
-      var isActive = await SpotifySdk.isSpotifyAppActive;
-      final snackBar = SnackBar(
-          content: Text(isActive
-              ? 'Spotify app connection is active (currently playing)'
-              : 'Spotify app connection is not active (currently not playing)'));
-
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    } on PlatformException catch (e) {
-      setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setStatus('not implemented');
-    }
-  }
-
-  void setStatus(String code, {String? message}) {
-    var text = message ?? '';
-    _logger.i('$code$text');
+class _EverythingState extends State<Everything> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }
