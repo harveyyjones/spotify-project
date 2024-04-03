@@ -7,7 +7,6 @@ import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/crossfade_state.dart';
 import 'package:spotify_sdk/models/image_uri.dart';
-import 'package:spotify_sdk/models/player_context.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
@@ -17,8 +16,6 @@ CrossfadeState? crossfadeState;
 late ImageUri? currentTrackImageUri;
 bool _loading = false;
 late bool connected;
-final double _sliderDurationMusic = 50.0;
-double _sliderVolume = 0.5;
 BusinessLogic _businessLogic = BusinessLogic();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,9 +29,10 @@ Future<void> main() async {
 }
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  const Home({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _HomeState createState() => _HomeState();
 }
 
@@ -78,224 +76,24 @@ class _HomeState extends State<Home> {
       ),
     );
   }
-
-// BODY OF THE APPLICATION
-  Widget mainScreen(BuildContext context2) {
-    return Stack(
-      children: [
-        // Container(
-        //   color: Color.fromARGB(255, 176, 255, 233),
-        // ),
-        ListView(
-          padding: const EdgeInsets.all(8),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    _businessLogic.connectToSpotifyRemote();
-                    setState(() {});
-                  },
-                  child: const Icon(Icons.settings_remote),
-                ),
-              ],
-            ),
-            connected
-                ? SizedBox() // ? Everything()
-                : const Center(
-                    child: Text('Not connected'),
-                  ),
-          ],
-        ),
-        _loading
-            ? Container(
-                color: Colors.black12,
-                child: const Center(child: CircularProgressIndicator()))
-            : const SizedBox(),
-      ],
-    );
-  }
-
-  Widget homeScreenWidget() {
-    return StreamBuilder<PlayerState>(
-      stream: SpotifySdk.subscribePlayerState(),
-      builder: (BuildContext context, AsyncSnapshot<PlayerState> snapshot) {
-        var track = snapshot.data?.track;
-        currentTrackImageUri = track?.imageUri;
-
-        var playerState = snapshot.data;
-
-        if (playerState == null || track == null) {
-          return Center(
-            child: Container(),
-          );
-        }
-
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // PLAYBACK DAKIKASI BURDA
-                // Text(
-                //     'Progress: ${playerState.playbackPosition}ms/${track.duration}ms'),
-              ],
-            ),
-            connected
-                ? spotifyImageWidget(track.imageUri)
-                : const Text('Connect to see an image...'),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height / 80,
-                ),
-
-                // ********************************* ŞARKI VE SANATÇI İSMİ *************************************************
-                Text(
-                  '${track.artist.name} - ${track.name} ',
-                  style: TextStyle(fontSize: 22),
-                ),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: <Widget>[
-                    IconButton(
-                        onPressed: _businessLogic.skipPrevious,
-                        icon: const Icon(
-                          Icons.skip_previous,
-                          weight: 50,
-                        )),
-                    playerState.isPaused
-                        ? IconButton(
-                            onPressed: _businessLogic.resume,
-                            icon: const Icon(
-                              Icons.play_arrow,
-                              weight: 50,
-                            ))
-                        : IconButton(
-                            onPressed: () {
-                              _businessLogic.pause();
-                              setState(() {});
-                            },
-                            icon: const Icon(
-                              Icons.pause,
-                              weight: 50,
-                            )),
-                    IconButton(
-                        onPressed: _businessLogic.skipNext,
-                        icon: const Icon(
-                          Icons.skip_next,
-                          weight: 50,
-                        )),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildPlayerContextWidget() {
-    return StreamBuilder<PlayerContext>(
-      stream: SpotifySdk.subscribePlayerContext(),
-      initialData: PlayerContext('', '', '', ''),
-      builder: (BuildContext context, AsyncSnapshot<PlayerContext> snapshot) {
-        var playerContext = snapshot.data;
-        if (playerContext == null) {
-          return const Center(
-            child: Text('Not connected'),
-          );
-        } else {
-          return const SizedBox();
-        }
-      },
-    );
-  }
-
-  Widget spotifyImageWidget(ImageUri image) {
-    return FutureBuilder(
-        future: SpotifySdk.getImage(
-          imageUri: image,
-          dimension: ImageDimension.large,
-        ),
-        builder: (BuildContext context, AsyncSnapshot<Uint8List?> snapshot) {
-          if (snapshot.hasData) {
-            return Padding(
-              padding:
-                  EdgeInsets.only(top: MediaQuery.of(context).size.height / 11),
-              child: Image.memory(snapshot.data!),
-            );
-          } else if (snapshot.hasError) {
-            _businessLogic.setStatus(snapshot.error.toString());
-            return SizedBox(
-              width: ImageDimension.large.value.toDouble(),
-              height: ImageDimension.large.value.toDouble(),
-              child: const Center(child: Text('Error getting image')),
-            );
-          } else {
-            return SizedBox(
-              width: ImageDimension.large.value.toDouble(),
-              height: ImageDimension.large.value.toDouble(),
-              child: const Center(child: Text('Getting image...')),
-            );
-          }
-        });
-  }
-
-  //********************************************************** AŞAĞISI YALNIZCA BUSINESS LOGIC.  ***************************************************************** */
-
-  // Hesapla bağlantıyı ve senkronizasyonu kesen fonksiyon.
-  Future<void> disconnect() async {
-    try {
-      setState(() {
-        _loading = true;
-      });
-      var result = await SpotifySdk.disconnect();
-      _businessLogic
-          .setStatus(result ? 'disconnect successful' : 'disconnect failed');
-      setState(() {
-        _loading = false;
-      });
-    } on PlatformException catch (e) {
-      setState(() {
-        _loading = false;
-      });
-      _businessLogic.setStatus(e.code, message: e.message);
-    } on MissingPluginException {
-      setState(() {
-        _loading = false;
-      });
-      _businessLogic.setStatus('not implemented');
-    }
-  }
 }
 
+// ignore: must_be_immutable
 class Everything extends StatefulWidget {
   bool connected;
-  Everything(this.connected);
+  Everything(this.connected, {super.key});
 
   @override
   State<Everything> createState() => _EverythingState();
 }
 
 class _EverythingState extends State<Everything> {
-  void _connectToSpotifyRemote() {
-    _businessLogic.connectToSpotifyRemote();
-    setState(() {}); // This triggers a rebuild, but it's necessary here
-  }
-
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Container(
-          color: Color.fromARGB(255, 176, 255, 233),
+          color: const Color.fromARGB(255, 176, 255, 233),
         ),
         ListView(
           padding: const EdgeInsets.all(8),
@@ -346,6 +144,7 @@ class _EverythingState extends State<Everything> {
                                   ),
                                   builder: (BuildContext context,
                                       AsyncSnapshot<Uint8List?> snapshot) {
+                                    // ******************************************* IMAGE IS HERE ***************************************
                                     if (snapshot.hasData) {
                                       return Padding(
                                         padding: EdgeInsets.only(
@@ -388,7 +187,7 @@ class _EverythingState extends State<Everything> {
                               // ********************************* ŞARKI VE SANATÇI İSMİ *************************************************
                               Text(
                                 '${track.artist.name} - ${track.name} ',
-                                style: TextStyle(fontSize: 22),
+                                style: const TextStyle(fontSize: 22),
                               ),
 
                               Row(
