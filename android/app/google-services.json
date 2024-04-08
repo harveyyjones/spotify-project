@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "985372741706",
+    "project_id": "musee-285eb",
+    "storage_bucket": "musee-285eb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:985372741706:android:c92c014fe473d59aff96b3",
+        "android_client_info": {
+          "package_name": "com.spotifyproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeu7KYeIdCUZ8DZ0oCjjzK15rVdilwKO8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
