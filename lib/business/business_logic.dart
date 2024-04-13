@@ -41,8 +41,7 @@ class BusinessLogic {
 
   //********************************************************** AŞAĞISI YALNIZCA BUSINESS LOGIC.  ***************************************************************** */
 
-  // Hesapla bağlantıyı ve senkronizasyonu kesen fonksiyon.
-
+// API'den veri çekme izni alan fonksiyon.
   Future<String> getAccessToken(clientId, redirectURL) async {
     try {
       var authenticationToken = await SpotifySdk.getAccessToken(

@@ -1,30 +1,78 @@
 import 'dart:async';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:logger/logger.dart';
+import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/business/business_logic.dart';
+import 'package:spotify_project/screens/landing_screen.dart';
+import 'package:spotify_project/screens/steppers.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
-import 'package:spotify_sdk/models/crossfade_state.dart';
 import 'package:spotify_sdk/models/image_uri.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
+FutureOr<User?> getCurrentUser() async {
+  var currentUser = await FirebaseAuth.instance.currentUser;
+  return currentUser;
+}
+
+FirestoreDatabaseService _databaseService = FirestoreDatabaseService();
 String clientId = "b56ad9c2cf434b748466bb6adbb511ca";
 String redirectURL = "https://www.rubycurehealthtourism.com/";
-CrossfadeState? crossfadeState;
 late ImageUri? currentTrackImageUri;
 bool _loading = false;
 late bool connected;
 BusinessLogic _businessLogic = BusinessLogic();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+      options: const FirebaseOptions(
+    apiKey: "AIzaSyAeu7KYeIdCUZ8DZ0oCjjzK15rVdilwKO8",
+    appId: "1:985372741706:android:c92c014fe473d59aff96b3",
+    messagingSenderId: "985372741706",
+    projectId: "musee-285eb",
+  ));
   try {
     await SpotifySdk.connectToSpotifyRemote(
             clientId: clientId, redirectUrl: redirectURL)
-        .then((value) => runApp(const Home()));
+        .then((value) => runApp(const MyApp()));
   } catch (e) {
     print("Spotify girişe izin vermedi.");
+  }
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ScreenUtilInit(
+        designSize: const Size(720, 1080),
+        builder: (context, child) => MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Rubycure',
+            home: FutureBuilder<User?>(
+                future: Future.value(getCurrentUser()),
+                builder: (BuildContext context,
+                    AsyncSnapshot<FutureOr<User?>> snapshot) {
+                  if (snapshot.hasData) {
+                    FutureOr<User?>? user =
+                        snapshot.data; // bu senin kullanıcı örneğin.
+                    /// burada kullanıcı oturum açmış.
+                    print(
+                        "************************************************************");
+                    print("Şu anda bir oturum açık: ${currentUser?.uid}");
+
+                    return const Home();
+                  } else {
+                    return LandingPage();
+                  }
+
+                  /// kullanıcı oturum açmamış.
+                })));
   }
 }
 
@@ -58,7 +106,7 @@ class _HomeState extends State<Home> {
   );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context1) {
     return MaterialApp(
       home: StreamBuilder<ConnectionStatus>(
         stream: SpotifySdk.subscribeConnectionStatus(),
@@ -69,6 +117,21 @@ class _HomeState extends State<Home> {
             connected = data.connected;
           }
           return Scaffold(
+            bottomNavigationBar: BottomNavigationBar(
+              items: [
+                BottomNavigationBarItem(
+                  label: "Delete Account",
+                  icon: IconButton(
+                      onPressed: () {
+                        print("Pressed");
+                        _databaseService.deleteAccount(context1);
+                      },
+                      icon: const Icon(Icons.delete)),
+                ),
+                const BottomNavigationBarItem(
+                    label: "My Profile", icon: Icon(Icons.person))
+              ],
+            ),
             body: Everything(connected),
             // bottomNavigationBar: _connected ? _buildBottomBar(context) : null,
           );

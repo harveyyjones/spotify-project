@@ -40,6 +40,16 @@ dependencies:
   flutter_dotenv: ^5.1.0
   flutter_seekbar: ^1.0.1
   logger: ^1.4.0
+  firebase_core: ^2.4.1
+  firebase_database: ^10.0.9
+  cool_alert: ^2.0.1
+  flutter_screenutil: ^5.6.0
+  firebase_storage: ^11.0.10
+  image_cropper: ^5.0.1
+  image_picker: ^1.0.7
+  cloud_firestore: ^4.3.1
+  google_fonts: ^6.2.1
+  firebase_auth: ^4.19.0
 
 dev_dependencies:
   flutter_test:
