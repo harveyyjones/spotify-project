@@ -67,7 +67,7 @@ class SteppersForClientsWidgetState extends State<SteppersForClientsWidget> {
     try {
       uploadImageToDatabase() async {
         UploadTask? uploadTask;
-        Reference ref = FirebaseStorage.instance
+        final ref = FirebaseStorage.instance
             .ref()
             .child("users")
             .child(currentUser!.uid)

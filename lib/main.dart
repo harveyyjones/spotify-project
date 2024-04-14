@@ -30,11 +30,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
       options: const FirebaseOptions(
-    apiKey: "AIzaSyAeu7KYeIdCUZ8DZ0oCjjzK15rVdilwKO8",
-    appId: "1:985372741706:android:c92c014fe473d59aff96b3",
-    messagingSenderId: "985372741706",
-    projectId: "musee-285eb",
-  ));
+          apiKey: "AIzaSyAeu7KYeIdCUZ8DZ0oCjjzK15rVdilwKO8",
+          appId: "1:985372741706:android:c92c014fe473d59aff96b3",
+          messagingSenderId: "985372741706",
+          projectId: "musee-285eb",
+          storageBucket: "gs://musee-285eb.appspot.com"));
   try {
     await SpotifySdk.connectToSpotifyRemote(
             clientId: clientId, redirectUrl: redirectURL)
@@ -66,7 +66,7 @@ class MyApp extends StatelessWidget {
                         "************************************************************");
                     print("Şu anda bir oturum açık: ${currentUser?.uid}");
 
-                    return const Home();
+                    return LandingPage();
                   } else {
                     return LandingPage();
                   }
@@ -118,18 +118,11 @@ class _HomeState extends State<Home> {
           }
           return Scaffold(
             bottomNavigationBar: BottomNavigationBar(
-              items: [
+              items: const [
                 BottomNavigationBarItem(
-                  label: "Delete Account",
-                  icon: IconButton(
-                      onPressed: () {
-                        print("Pressed");
-                        _databaseService.deleteAccount(context1);
-                      },
-                      icon: const Icon(Icons.delete)),
-                ),
-                const BottomNavigationBarItem(
-                    label: "My Profile", icon: Icon(Icons.person))
+                    label: "My Profile", icon: Icon(Icons.person)),
+                BottomNavigationBarItem(
+                    label: "Messages", icon: Icon(Icons.message))
               ],
             ),
             body: Everything(connected),
