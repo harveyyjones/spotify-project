@@ -27,7 +27,7 @@ class _MessageScreenState extends State<MessageScreen> {
     return Scaffold(
         backgroundColor: const Color(0xfff2f9ff),
         bottomNavigationBar: BottomBar(
-          selectedIndex: 2,
+          selectedIndex: 3,
         ),
         body: Padding(
           padding: EdgeInsets.only(top: 22.h),

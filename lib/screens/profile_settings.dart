@@ -8,7 +8,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
-import 'package:spotify_project/screens/own_profile_screen.dart';
+import 'package:spotify_project/screens/own_profile_screens_for_clients.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/screens/steppers.dart';
 
@@ -77,7 +77,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
             onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => OwnProfileScreen(),
+                  builder: (context) => OwnProfileScreenForClients(),
                 )),
             icon: Icon(
               Icons.arrow_back_ios,

@@ -6,7 +6,6 @@ import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/screens/profile_settings.dart';
 import 'package:spotify_project/screens/register_page.dart';
-import 'package:spotify_project/screens/steppers.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
 
 class OwnProfileScreenForClients extends StatefulWidget {
@@ -33,9 +32,9 @@ class _OwnProfileScreenForClientsState
                 backgroundColor: Color(0xfff2f9ff),
                 bottomNavigationBar: snapshot.data!.clinicOwner ?? true
                     ? BottomBar(
-                        selectedIndex: 1,
+                        selectedIndex: 2,
                       )
-                    : BottomBar(selectedIndex: 1),
+                    : BottomBar(selectedIndex: 2),
                 body: SingleChildScrollView(
                   child: Column(
                     children: [

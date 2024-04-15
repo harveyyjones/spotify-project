@@ -1,3 +1,4 @@
+// SI VIS PACEM, PARA BELLUM.
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -135,7 +136,7 @@ class _HomeState extends State<Home> {
               ],
             ),
             bottomNavigationBar: BottomBar(
-              selectedIndex: 1,
+              selectedIndex: 0,
             ),
 
             body: Everything(connected),

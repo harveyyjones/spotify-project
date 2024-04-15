@@ -3,8 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/main.dart';
+import 'package:spotify_project/screens/matches_screen.dart';
 import 'package:spotify_project/screens/message_box.dart';
-import 'package:spotify_project/screens/own_profile_screen.dart';
 import 'package:spotify_project/screens/own_profile_screens_for_clients.dart';
 
 class BottomBar extends StatefulWidget {
@@ -20,16 +20,17 @@ class _BottomBarState extends State<BottomBar> {
   FirestoreDatabaseService _firestoreDatabaseService =
       FirestoreDatabaseService();
   var _index = 0;
-
+// İlerde admin paneli gibi kullanırım.
   final List _pagesToNavigateToForClinicOwners = [
     Home(),
-    OwnProfileScreen(),
+    // OwnProfileScreen(),
     MessageScreen()
   ];
 
   final List _pagesToNavigateToForClients = [
     // TODO: Bunlar zamanla artacak, müşterilerde kendi profillerini falan oluşturacak.
     Home(),
+    MatchesScreen(),
     OwnProfileScreenForClients(),
     MessageScreen()
   ];
@@ -70,17 +71,17 @@ class _BottomBarState extends State<BottomBar> {
                     Icons.home,
                     color: Colors.black,
                   )),
-              // BottomNavigationBarItem(
-              //     activeIcon: Icon(
-              //       Icons.notifications_none_outlined,
-              //       size: 60.sp,
-              //     ),
-              //     label: "Notifications",
-              //     icon: Icon(
-              //       size: 50.sp,
-              //       Icons.notifications_none_outlined,
-              //       color: Colors.black,
-              //     )),
+              BottomNavigationBarItem(
+                  activeIcon: Icon(
+                    Icons.notifications_none_outlined,
+                    size: 60.sp,
+                  ),
+                  label: "Notifications",
+                  icon: Icon(
+                    size: 50.sp,
+                    Icons.notifications_none_outlined,
+                    color: Colors.black,
+                  )),
               BottomNavigationBarItem(
                   activeIcon: Icon(
                     Icons.person,
