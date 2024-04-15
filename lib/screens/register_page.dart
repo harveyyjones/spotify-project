@@ -13,6 +13,10 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
+FirebaseAuth auth = FirebaseAuth.instance;
+
+final User? currentUser = FirebaseAuth.instance.currentUser;
+
 class _RegisterPageState extends State<RegisterPage> {
   final formKey = GlobalKey<FormState>();
 
@@ -36,13 +40,13 @@ class _RegisterPageState extends State<RegisterPage> {
     Size size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Color(0xfff2f9ff),
+      backgroundColor: const Color(0xfff2f9ff),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(
+            icon: const Icon(
               Icons.arrow_back_ios,
               color: Colors.black,
             )),
@@ -160,20 +164,20 @@ class _RegisterPageState extends State<RegisterPage> {
         },
         decoration: InputDecoration(
           errorBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 2),
+              borderSide: const BorderSide(color: Colors.black, width: 2),
               borderRadius: BorderRadius.circular(5)),
           enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 2),
+              borderSide: const BorderSide(color: Colors.black, width: 2),
               borderRadius: BorderRadius.circular(5)),
           focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 2),
+              borderSide: const BorderSide(color: Colors.black, width: 2),
               borderRadius: BorderRadius.circular(5)),
           label: Text(
             "E Mail",
             style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600, color: Colors.black),
           ),
-          border: OutlineInputBorder(
+          border: const OutlineInputBorder(
             borderSide:
                 BorderSide(color: Color.fromARGB(255, 0, 255, 0), width: 2),
           ),
@@ -204,20 +208,20 @@ class _RegisterPageState extends State<RegisterPage> {
         textInputAction: TextInputAction.next,
         decoration: InputDecoration(
             errorBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.black, width: 2),
+                borderSide: const BorderSide(color: Colors.black, width: 2),
                 borderRadius: BorderRadius.circular(5)),
             enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.black, width: 2),
+                borderSide: const BorderSide(color: Colors.black, width: 2),
                 borderRadius: BorderRadius.circular(5)),
             focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.black, width: 2),
+                borderSide: const BorderSide(color: Colors.black, width: 2),
                 borderRadius: BorderRadius.circular(5)),
             label: Text(
               "Password",
               style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w600, color: Colors.black),
             ),
-            border: OutlineInputBorder(
+            border: const OutlineInputBorder(
               borderSide:
                   BorderSide(color: Color.fromARGB(255, 0, 255, 0), width: 2),
             ),
@@ -258,20 +262,20 @@ class _RegisterPageState extends State<RegisterPage> {
         textInputAction: TextInputAction.done,
         decoration: InputDecoration(
           errorBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 2),
+              borderSide: const BorderSide(color: Colors.black, width: 2),
               borderRadius: BorderRadius.circular(5)),
           enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 2),
+              borderSide: const BorderSide(color: Colors.black, width: 2),
               borderRadius: BorderRadius.circular(5)),
           focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 2),
+              borderSide: const BorderSide(color: Colors.black, width: 2),
               borderRadius: BorderRadius.circular(5)),
           label: Text(
             "Phone Number",
             style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600, color: Colors.black),
           ),
-          border: OutlineInputBorder(
+          border: const OutlineInputBorder(
             borderSide:
                 BorderSide(color: Color.fromARGB(255, 0, 255, 0), width: 2),
           ),
@@ -320,7 +324,7 @@ class _RegisterPageState extends State<RegisterPage> {
       margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
       //padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       backgroundColor: color ?? Colors.red,
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       onVisible: onVisible,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -338,7 +342,6 @@ class _RegisterPageState extends State<RegisterPage> {
   Future signUp() async {
     FirestoreDatabaseService _firestoreDatabaseService =
         FirestoreDatabaseService();
-    FirebaseAuth auth = FirebaseAuth.instance;
 
     User? user;
     try {
@@ -349,13 +352,16 @@ class _RegisterPageState extends State<RegisterPage> {
 
       // Kullanıcı başarıyla kaydedildikten sonra Firestore'a kullanıcı bilgilerini kaydet
       await _firestoreDatabaseService.saveUser(
-        "", // Bu parametreleri gerekirse doldurabilirsin
-        "",
-        "",
-        "",
-        "",
-        "",
-        phoneNumberController.text,
+        biography: "",
+        clinicLocation: "",
+        clinicName: "",
+        clinicOwner: false,
+        majorInfo: "",
+        name: "",
+        phoneNumber: phoneNumberController.text.toString(),
+        photoUrl: "",
+        uid: auth.currentUser?.uid,
+        // Bu parametreleri gerekirse doldurabilirsin
       );
 
       user = userCredential.user;
@@ -364,10 +370,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
       await user.reload();
       user = auth.currentUser;
-      Future.delayed(Duration(seconds: 1));
+      Future.delayed(const Duration(seconds: 1));
       callSnackbar("Kayıt başarılı !", Colors.green, () {});
       Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => SteppersForClients(),
+        builder: (context) => const SteppersForClients(),
       ));
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-exists' ||

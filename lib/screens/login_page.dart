@@ -308,7 +308,6 @@ class _LoginPageState extends State<LoginPage> {
         try {
           var user = await auth.signInWithEmailAndPassword(
               email: emailController.text, password: passwordController.text);
-          // Geçici olarak bloke ettim. Over request hatası alıyordum yoksa.
           if (user != null) {
             // ignore: use_build_context_synchronously
             Navigator.pushAndRemoveUntil(

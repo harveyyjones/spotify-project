@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:spotify_project/Business_Logic/Models/conversations_in_message_box.dart';
 import 'package:spotify_project/Business_Logic/Models/message_model.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
+import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/screens/steppers.dart';
 
 class ChatDatabaseService extends FirestoreDatabaseService {

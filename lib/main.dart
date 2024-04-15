@@ -9,6 +9,7 @@ import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
 import 'package:spotify_project/screens/steppers.dart';
+import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/image_uri.dart';
 import 'package:spotify_sdk/models/player_state.dart';
@@ -53,20 +54,19 @@ class MyApp extends StatelessWidget {
         designSize: const Size(720, 1080),
         builder: (context, child) => MaterialApp(
             debugShowCheckedModeBanner: false,
-            title: 'Rubycure',
+            title: 'Musee',
             home: FutureBuilder<User?>(
                 future: Future.value(getCurrentUser()),
                 builder: (BuildContext context,
                     AsyncSnapshot<FutureOr<User?>> snapshot) {
                   if (snapshot.hasData) {
-                    FutureOr<User?>? user =
-                        snapshot.data; // bu senin kullanıcı örneğin.
+                    var user = snapshot.data; // bu senin kullanıcı örneğin.
                     /// burada kullanıcı oturum açmış.
                     print(
                         "************************************************************");
-                    print("Şu anda bir oturum açık: ${currentUser?.uid}");
+                    print("Şu anda bir oturum açık.");
 
-                    return LandingPage();
+                    return Home();
                   } else {
                     return LandingPage();
                   }
@@ -117,14 +117,27 @@ class _HomeState extends State<Home> {
             connected = data.connected;
           }
           return Scaffold(
-            bottomNavigationBar: BottomNavigationBar(
-              items: const [
-                BottomNavigationBarItem(
-                    label: "My Profile", icon: Icon(Icons.person)),
-                BottomNavigationBarItem(
-                    label: "Messages", icon: Icon(Icons.message))
+            appBar: AppBar(
+              actions: [
+                IconButton(
+                    onPressed: () async {
+                      await _databaseService.deleteAccount();
+                      Navigator.pushAndRemoveUntil<dynamic>(
+                        context,
+                        MaterialPageRoute<dynamic>(
+                          builder: (BuildContext context) => LandingPage(),
+                        ),
+                        (route) =>
+                            true, //if you want to disable back feature set to false
+                      );
+                    },
+                    icon: Icon(Icons.delete))
               ],
             ),
+            bottomNavigationBar: BottomBar(
+              selectedIndex: 1,
+            ),
+
             body: Everything(connected),
             // bottomNavigationBar: _connected ? _buildBottomBar(context) : null,
           );

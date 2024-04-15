@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
+import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/screens/sharePostScreen.dart';
 import 'package:spotify_project/screens/steppers.dart';
 
@@ -22,11 +23,13 @@ class FirestoreDatabaseService {
   var collection = FirebaseFirestore.instance.collection('users');
 
   late final FirebaseFirestore _instance = FirebaseFirestore.instance;
-
+  var currentUserUID;
   // O anki aktif kullanıcının bilgilerini alıp nesneye çeviren metod.
   Future<UserModel> getUserData() async {
+    User? user = await FirebaseAuth.instance.currentUser;
+
     DocumentSnapshot<Map<String, dynamic>> okunanUser =
-        await FirebaseFirestore.instance.doc("users/${currentUser!.uid}").get();
+        await FirebaseFirestore.instance.doc("users/${user?.uid}").get();
     Map<String, dynamic>? okunanUserbilgileriMap = okunanUser.data();
     UserModel okunanUserBilgileriNesne =
         UserModel.fromMap(okunanUserbilgileriMap!);
@@ -135,16 +138,16 @@ class FirestoreDatabaseService {
   }
 
 // Burada ilk kez register sayfasından aldığımız verileri veritabanına yolluyoruz. Öncesinde modelden geçirip map'e dönüştürüyoruz.
-  Future saveUser([
-    String? biography,
-    photoUrl,
-    String? name,
-    String? majorInfo,
-    String? clinicLocation,
-    String? clinicName,
-    String? phoneNumber,
-    bool? clinicOwner,
-  ]) async {
+  Future saveUser(
+      {String? biography,
+      photoUrl,
+      String? name,
+      String? majorInfo,
+      String? clinicLocation,
+      String? clinicName,
+      String? phoneNumber,
+      bool? clinicOwner,
+      var uid}) async {
     UserModel? eklenecekUser = UserModel(
         biography: biography ?? "",
         eMail: currentUser?.email ?? "",
@@ -153,7 +156,7 @@ class FirestoreDatabaseService {
             "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png",
         name: name ?? "",
         clinicLocation: clinicLocation ?? "",
-        userId: currentUser?.uid ?? "",
+        userId: uid ?? "",
         clinicName: clinicName ?? "",
         clinicOwner: clinicOwner ?? false,
         phoneNumber: phoneNumber);
@@ -166,16 +169,14 @@ class FirestoreDatabaseService {
 
     print("*****************************");
     print(eklenecekUser.toMap());
-    await _instance
-        .collection("users")
-        .doc(currentUser!.uid)
-        .set(eklenecekUser.toMap());
+    await _instance.collection("users").doc(uid).set(eklenecekUser.toMap());
     DocumentSnapshot<Map<String, dynamic>> okunanUser =
-        await FirebaseFirestore.instance.doc("users/${currentUser!.uid}").get();
+        await FirebaseFirestore.instance.doc("users/${uid}").get();
     Map<String, dynamic>? okunanUserbilgileriMap = okunanUser.data();
     UserModel okunanUserBilgileriNesne =
         UserModel.fromMap(okunanUserbilgileriMap!);
     print(okunanUserBilgileriNesne.toString());
+    currentUserUID = uid;
   }
 
   updateProfilePhoto(String imageURL) async {
@@ -360,26 +361,21 @@ class FirestoreDatabaseService {
 
 // Kalıcı olarak hesap silme. Hesap silinir ama bilgiler kalır. Bilgileri de silmek için ayrı bir fonksiyon daha kullanılması gerekli.
 
-  deleteAccount(context) {
-    User? user = FirebaseAuth.instance.currentUser;
+  deleteAccount() async {
+    User? user = await FirebaseAuth.instance.currentUser;
+    print("Şu hesap siliniyor.. ${user!.uid}");
 
     try {
       user != null
-          ? user.delete().whenComplete(() {
+          ? await user.delete().whenComplete(() {
               print("Account has been deleted.");
-              Navigator.pushAndRemoveUntil<dynamic>(
-                context,
-                MaterialPageRoute<dynamic>(
-                  builder: (BuildContext context) => LandingPage(),
-                ),
-                (route) =>
-                    true, //if you want to disable back feature set to false
-              );
 
               callSnackbar(
                 "Account is deleted.",
                 Colors.green,
               );
+              print(
+                  "User with the uid of: ${currentUser?.uid} deleted. *************************");
             })
           : print("User is null");
     } catch (e) {

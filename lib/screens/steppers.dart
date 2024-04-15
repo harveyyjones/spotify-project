@@ -9,9 +9,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/main.dart';
+import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/widgets/personal_info_bar.dart';
 
-final User? currentUser = FirebaseAuth.instance.currentUser;
 TextEditingController _controllerForName = TextEditingController();
 TextEditingController _controllerForMajorInfo = TextEditingController();
 TextEditingController _controllerForClinicLocation = TextEditingController();
