@@ -22,15 +22,14 @@ class _BottomBarState extends State<BottomBar> {
   var _index = 0;
 // İlerde admin paneli gibi kullanırım.
   final List _pagesToNavigateToForClinicOwners = [
-    Home(),
+    const Home(),
     // OwnProfileScreen(),
     MessageScreen()
   ];
 
   final List _pagesToNavigateToForClients = [
-    // TODO: Bunlar zamanla artacak, müşterilerde kendi profillerini falan oluşturacak.
-    Home(),
-    MatchesScreen(),
+    const Home(),
+    const MatchesScreen(),
     OwnProfileScreenForClients(),
     MessageScreen()
   ];
@@ -38,12 +37,12 @@ class _BottomBarState extends State<BottomBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Color(0xfff2f9ff),
+      color: const Color(0xfff2f9ff),
       height: screenHeight / 14,
       child: FutureBuilder(
         future: _firestoreDatabaseService.getUserData(),
         builder: (context, snapshot) => BottomNavigationBar(
-            backgroundColor: Color(0xfff2f9ff),
+            backgroundColor: const Color(0xfff2f9ff),
             selectedItemColor: Colors.blue,
             selectedFontSize: 0,
             currentIndex: widget.selectedIndex,

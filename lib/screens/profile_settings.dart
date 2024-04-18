@@ -359,7 +359,6 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                                         AutovalidateMode.onUserInteraction,
                                     validator: (value) {
                                       if (value!.length < 200) {
-                                        // TODO: Update major info metodu yaz.
                                         _databaseService.updateMajorInfo(value);
                                       } else {
                                         return "Too long!";

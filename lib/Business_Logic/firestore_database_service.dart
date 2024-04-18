@@ -9,10 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:spotify_project/screens/landing_screen.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/screens/sharePostScreen.dart';
-import 'package:spotify_project/screens/steppers.dart';
 
 import 'Models/user_model.dart';
 
@@ -382,5 +380,13 @@ class FirestoreDatabaseService {
       print("***********************************");
       print(e.toString());
     }
+  }
+
+  updateIsUserListening(state, url) async {
+    // Buradan anlık olarak müzik dinlenip dinlenmediğini, dinleniyorsa url'sini ve başlığını çekiyorum.
+    await _instance
+        .collection("users")
+        .doc(currentUser!.uid)
+        .update({"isUserListening": state, "currentlyListeningMusicUrl": url});
   }
 }
