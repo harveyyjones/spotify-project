@@ -8,7 +8,6 @@ import 'package:logger/logger.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
-import 'package:spotify_project/screens/steppers.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/image_uri.dart';
@@ -100,10 +99,17 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    _businessLogic.connectToSpotifyRemote();
+    _businessLogic.connectToSpotifyRemote().then((value) => connected = true);
     _businessLogic.getAccessToken(clientId, redirectURL);
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    connected = false;
   }
 
   @override
@@ -116,6 +122,8 @@ class _HomeState extends State<Home> {
           var data = snapshot.data;
           if (data != null) {
             connected = data.connected;
+            print(
+                "************** Is connected? :  ${connected} *******************");
           }
           return Scaffold(
             appBar: AppBar(
@@ -184,7 +192,7 @@ class _EverythingState extends State<Everything> {
       _name.listen((event) async {
         print("*****************************************************");
         print(isActive);
-        print(event.track!.name);
+        print(event.track?.name ?? "");
         _name != null
             ? _service.updateIsUserListening(isActive, event.track!.name)
             : _service.updateIsUserListening(isActive, "");
@@ -200,7 +208,7 @@ class _EverythingState extends State<Everything> {
     return Stack(
       children: [
         Container(
-          color: Color.fromARGB(255, 1, 4, 3),
+          color: Color.fromARGB(255, 139, 204, 182),
         ),
         ListView(
           padding: const EdgeInsets.all(8),
@@ -225,87 +233,52 @@ class _EverythingState extends State<Everything> {
                       currentTrackImageUri = track?.imageUri;
                       var playerState = snapshot.data;
                       _startTimer();
+
                       if (playerState == null || track == null) {
                         return Center(
                           child: Container(color: Colors.purple),
                         );
-                      }
-
-                      return Column(
-                        children: <Widget>[
-                          FutureBuilder(
-                            future: SpotifySdk.getImage(
-                              imageUri: track.imageUri,
-                              dimension: ImageDimension.large,
+                      } else {
+//TODO: Aşağıya bir şekilde stream entegre et.
+                        return Column(
+                          children: <Widget>[
+                            FutureBuilder(
+                              future: SpotifySdk.getImage(
+                                imageUri: track.imageUri,
+                                dimension: ImageDimension.large,
+                              ),
+                              builder: (BuildContext context,
+                                  AsyncSnapshot<Uint8List?> snapshot) {
+                                if (snapshot.hasData) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(
+                                        top:
+                                            MediaQuery.of(context).size.height /
+                                                11),
+                                    child: Image.memory(snapshot.data!),
+                                  );
+                                } else {
+                                  return Center(
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      color: Colors.amber,
+                                    ),
+                                  );
+                                }
+                              },
                             ),
-                            builder: (BuildContext context,
-                                AsyncSnapshot<Uint8List?> snapshot) {
-                              if (snapshot.hasData) {
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                      top: MediaQuery.of(context).size.height /
-                                          11),
-                                  child: Image.memory(snapshot.data!),
-                                );
-                              } else if (snapshot.hasError) {
-                                return SizedBox(
-                                  width: ImageDimension.large.value.toDouble(),
-                                  height: ImageDimension.large.value.toDouble(),
-                                  child: const Center(
-                                      child: Text('Error getting image')),
-                                );
-                              } else {
-                                return SizedBox(
-                                  width: ImageDimension.large.value.toDouble(),
-                                  height: ImageDimension.large.value.toDouble(),
-                                  child: const Center(
-                                      child: Text('Getting image...')),
-                                );
-                              }
-                            },
-                          ),
-                          Text(
-                            '${track.artist.name} - ${track.name} ',
-                            style: const TextStyle(fontSize: 22),
-                          ),
-                          //**************************** BUTTONS ************************************* */
-                          // Row(
-                          //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          //   children: <Widget>[
-                          //     IconButton(
-                          //       onPressed: _businessLogic.skipPrevious,
-                          //       icon:
-                          //           const Icon(Icons.skip_previous, weight: 50),
-                          //     ),
-                          //     playerState.isPaused
-                          //         ? IconButton(
-                          //             onPressed: () {
-                          //               setState(() {
-                          //                 _businessLogic.resume();
-                          //               });
-                          //             },
-                          //             icon: const Icon(Icons.play_arrow,
-                          //                 weight: 50),
-                          //           )
-                          //         : IconButton(
-                          //             onPressed: () {
-                          //               _businessLogic.pause();
-                          //               setState(() {});
-                          //             },
-                          //             icon: const Icon(Icons.pause, weight: 50),
-                          //           ),
-                          //     IconButton(
-                          //       onPressed: () {
-                          //         setState(() {
-                          //           _businessLogic.skipNext();
-                          //         });
-                          //       },
-                          //       icon: const Icon(Icons.skip_next, weight: 50),
-                          //     ),
-                          //   ],
-                          // ),
-                        ],
-                      );
+                            Text(
+                              '${track.artist.name} - ${track.name} ',
+                              style: const TextStyle(fontSize: 22),
+                            ),
+                            Text(
+                              '${snapshot.data!.track!.name} - ${track.imageUri.raw} ',
+                              style: const TextStyle(fontSize: 22),
+                            ),
+                          ],
+                        );
+                      }
                     },
                   )
                 : const Center(
