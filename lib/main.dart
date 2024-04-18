@@ -169,6 +169,12 @@ class _EverythingState extends State<Everything> {
     });
   }
 
+  void callSetState() {
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      setState(() {});
+    });
+  }
+
   void _updateActiveStatus({name}) async {
     try {
       isActive = await SpotifySdk.isSpotifyAppActive;
@@ -190,10 +196,11 @@ class _EverythingState extends State<Everything> {
 
   @override
   Widget build(BuildContext context) {
+    // callSetState();
     return Stack(
       children: [
         Container(
-          color: const Color.fromARGB(255, 176, 255, 233),
+          color: Color.fromARGB(255, 1, 4, 3),
         ),
         ListView(
           padding: const EdgeInsets.all(8),
@@ -217,7 +224,7 @@ class _EverythingState extends State<Everything> {
                       var track = snapshot.data?.track;
                       currentTrackImageUri = track?.imageUri;
                       var playerState = snapshot.data;
-                      _startTimer(name: track?.name ?? "");
+                      _startTimer();
                       if (playerState == null || track == null) {
                         return Center(
                           child: Container(color: Colors.purple),
@@ -261,41 +268,42 @@ class _EverythingState extends State<Everything> {
                             '${track.artist.name} - ${track.name} ',
                             style: const TextStyle(fontSize: 22),
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: <Widget>[
-                              IconButton(
-                                onPressed: _businessLogic.skipPrevious,
-                                icon:
-                                    const Icon(Icons.skip_previous, weight: 50),
-                              ),
-                              playerState.isPaused
-                                  ? IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          _businessLogic.resume();
-                                        });
-                                      },
-                                      icon: const Icon(Icons.play_arrow,
-                                          weight: 50),
-                                    )
-                                  : IconButton(
-                                      onPressed: () {
-                                        _businessLogic.pause();
-                                        setState(() {});
-                                      },
-                                      icon: const Icon(Icons.pause, weight: 50),
-                                    ),
-                              IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _businessLogic.skipNext();
-                                  });
-                                },
-                                icon: const Icon(Icons.skip_next, weight: 50),
-                              ),
-                            ],
-                          ),
+                          //**************************** BUTTONS ************************************* */
+                          // Row(
+                          //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          //   children: <Widget>[
+                          //     IconButton(
+                          //       onPressed: _businessLogic.skipPrevious,
+                          //       icon:
+                          //           const Icon(Icons.skip_previous, weight: 50),
+                          //     ),
+                          //     playerState.isPaused
+                          //         ? IconButton(
+                          //             onPressed: () {
+                          //               setState(() {
+                          //                 _businessLogic.resume();
+                          //               });
+                          //             },
+                          //             icon: const Icon(Icons.play_arrow,
+                          //                 weight: 50),
+                          //           )
+                          //         : IconButton(
+                          //             onPressed: () {
+                          //               _businessLogic.pause();
+                          //               setState(() {});
+                          //             },
+                          //             icon: const Icon(Icons.pause, weight: 50),
+                          //           ),
+                          //     IconButton(
+                          //       onPressed: () {
+                          //         setState(() {
+                          //           _businessLogic.skipNext();
+                          //         });
+                          //       },
+                          //       icon: const Icon(Icons.skip_next, weight: 50),
+                          //     ),
+                          //   ],
+                          // ),
                         ],
                       );
                     },
