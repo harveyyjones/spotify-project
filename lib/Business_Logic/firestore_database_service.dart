@@ -389,4 +389,89 @@ class FirestoreDatabaseService {
         .doc(currentUser!.uid)
         .update({"isUserListening": state, "currentlyListeningMusicUrl": url});
   }
+
+  getUserDatasToMatch(
+      currentlyListeningMusicUrl, amIListeningNow, title) async {
+    // Anlık olarak sürekli olarak o anda eşleşilen kişinin bilgilerini kullanıma hazır tutuyor.
+    QuerySnapshot<Map<String, dynamic>> _okunanUser =
+        await FirebaseFirestore.instance.collection("users").get();
+    for (var item in _okunanUser.docs) {
+      if (item["isUserListening"] &&
+          currentlyListeningMusicUrl == item["currentlyListeningMusicUrl"] &&
+          amIListeningNow) {
+        sendMatchesToDatabase(item["uid"], currentlyListeningMusicUrl, title);
+        print(" Eşleşilen kişi: ${item["name"]}");
+        print(" Eşleşilen kişinin uid: ${item["uid"]}");
+      }
+    }
+  }
+
+  sendMatchesToDatabase(uid, musicUrl, title) async {
+    // Veritabına daha sonradan notifcation sayfasında kullanılmak üzere uid'leri, zamanı ve hangi şarkıyı dinlerken eşleşildiğini gönderir.
+    //Böylece eşleşme gerçekleştiği anda aynı yerden veriyi çekerek ekranda gösterilebilir.
+    final previousMatchesRef =
+        _instance.doc("previousMatches/${currentUser!.uid}");
+    previousMatchesRef.collection("previousMatchesList").doc(uid).set({
+      "uid": uid,
+      "timeStamp": DateTime.now(),
+      "url": musicUrl,
+      "titleOfTheSong": title
+    }).then((value) => print("İşlem başarılı"));
+  }
+
+  getMatchesIds() async {
+    // Tüm eşleşmelerin Id'lerini döndürür. Daha sonra bilgileri çekmek için kullanılacak.
+    List tumEslesmelerinIdsi = [];
+    final previousMatchesRef = await _instance
+        .collection("previousMatches")
+        .doc(currentUser!.uid)
+        .collection("previousMatchesList")
+        .get();
+    for (var item in previousMatchesRef.docs) {
+      print(item["uid"]);
+      tumEslesmelerinIdsi.add(item["uid"]);
+      print("Tüm eşleşmelerin olduğu kişilerin idleri: ${tumEslesmelerinIdsi}");
+      return await tumEslesmelerinIdsi;
+    }
+  }
+
+  Future getUserDataViaUId() async {
+    // Eşleşilenlerin Id'lerini kullanarak kullanıcı bilgilerini çeken bir fonksiyon. Notifications kısmında ve video altında sergilenirken kullanılabilir.
+    UserModel users;
+    List usersList = [];
+    List<dynamic> eslesilenlerinIdleri = await getMatchesIds();
+    print("Tüm eşleşmelerin olduğu kişilerin idleri: ${eslesilenlerinIdleri}");
+    QuerySnapshot<Map<String, dynamic>> _okunanUser =
+        await FirebaseFirestore.instance.collection("users").get();
+    for (var item in await _okunanUser.docs) {
+      if (await eslesilenlerinIdleri.contains(item["uid"])) {
+        users = UserModel(
+          name: item["name"],
+          biography: item["biography"],
+          profilePhotoURL: item["profilePhotoURL"],
+        );
+        usersList.add(users);
+        return usersList;
+      }
+    }
+  }
+
+  getTheMutualSongViaUId() async {
+    // Ortak bir şey dinlediğimiz kişilerle hangi şarkıda eşleştiğimizi döndüren metod.
+
+    List tumEslesmelerinParcalari = [];
+    final previousMatchesRef = await _instance
+        .collection("matches")
+        .doc(currentUser!.uid)
+        .collection("previousMatchesList")
+        .orderBy("timeStamp", descending: false)
+        .get();
+    for (var item in previousMatchesRef.docs) {
+      print(item["uid"]);
+      tumEslesmelerinParcalari.add(item["titleOfTheSong"]);
+      print(
+          "Tüm eşleşmelerin olduğu kişilerin Şarkıları: ${tumEslesmelerinParcalari}");
+    }
+    return tumEslesmelerinParcalari;
+  }
 }

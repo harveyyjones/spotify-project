@@ -272,10 +272,6 @@ class _EverythingState extends State<Everything> {
                               '${track.artist.name} - ${track.name} ',
                               style: const TextStyle(fontSize: 22),
                             ),
-                            Text(
-                              '${snapshot.data!.track!.name} - ${track.imageUri.raw} ',
-                              style: const TextStyle(fontSize: 22),
-                            ),
                           ],
                         );
                       }

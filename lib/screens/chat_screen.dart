@@ -15,7 +15,11 @@ import 'package:spotify_project/widgets/divider_for_chat.dart';
 import 'package:intl/intl.dart';
 
 class ChatScreen extends StatefulWidget {
-  ChatScreen(String this.userIDOfOtherUser, this.profileURL, this.name);
+  ChatScreen(
+    String this.userIDOfOtherUser,
+    this.profileURL,
+    this.name,
+  );
   String userIDOfOtherUser;
   String profileURL;
   String name;
