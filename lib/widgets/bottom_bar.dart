@@ -50,11 +50,7 @@ class _BottomBarState extends State<BottomBar> {
               _index = value;
               Navigator.pushAndRemoveUntil(context,
                   MaterialPageRoute(builder: (context) {
-                if (snapshot.data!.clinicOwner == false) {
-                  return _pagesToNavigateToForClients[value];
-                } else {
-                  return _pagesToNavigateToForClinicOwners[value];
-                }
+                return _pagesToNavigateToForClients[value];
               }), (route) => false);
               setState(() {});
             },

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
+import 'package:spotify_project/widgets/bottom_bar.dart';
+import 'package:spotify_sdk/spotify_sdk.dart';
 
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({super.key});
@@ -7,10 +10,43 @@ class MatchesScreen extends StatefulWidget {
   State<MatchesScreen> createState() => _MatchesScreenState();
 }
 
+FirestoreDatabaseService firestoreDatabaseService = FirestoreDatabaseService();
+
 class _MatchesScreenState extends State<MatchesScreen> {
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    print("initstate metodu tetiklendi.");
+
+    firestoreDatabaseService.getUserDatasToMatch(
+        firestoreDatabaseService.returnCurrentlyListeningMusicName(),
+        SpotifySdk.isSpotifyAppActive,
+        firestoreDatabaseService.returnCurrentlyListeningMusicName());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    print("didChangeDependencies method triggered.");
+
+    // Your initialization logic here
+    firestoreDatabaseService.getUserDatasToMatch(
+      firestoreDatabaseService.returnCurrentlyListeningMusicName(),
+      SpotifySdk.isSpotifyAppActive,
+      firestoreDatabaseService.returnCurrentlyListeningMusicName(),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    firestoreDatabaseService.getUserDatasToMatch(
+        firestoreDatabaseService.returnCurrentlyListeningMusicName(),
+        SpotifySdk.isSpotifyAppActive,
+        firestoreDatabaseService.returnCurrentlyListeningMusicName());
     return Scaffold(
+      bottomNavigationBar: BottomBar(selectedIndex: 1),
       body: Flex(direction: Axis.vertical, children: [
         const SizedBox(
           height: 6,

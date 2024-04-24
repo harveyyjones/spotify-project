@@ -130,7 +130,7 @@ class _HomeState extends State<Home> {
               actions: [
                 IconButton(
                   onPressed: () async {
-                    await _service.deleteAccount();
+                    await _service.signOut(context);
                     Navigator.pushAndRemoveUntil<dynamic>(
                       context,
                       MaterialPageRoute<dynamic>(
@@ -168,6 +168,14 @@ class _EverythingState extends State<Everything> {
   @override
   void initState() {
     super.initState();
+    _updateActiveStatus();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    _startTimer();
     _updateActiveStatus();
   }
 

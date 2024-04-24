@@ -11,6 +11,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/screens/sharePostScreen.dart';
+import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'Models/user_model.dart';
 
@@ -331,10 +332,10 @@ class FirestoreDatabaseService {
   }
 
 // Çıkış yaparken
-  // signOut() async {
-  //   await FirebaseAuth.instance.signOut();
-  //   callSnackbar("Signed Out", Colors.green);
-  // }
+  signOut(context) async {
+    await FirebaseAuth.instance.signOut();
+    callSnackbar("Signed Out", Colors.green, context);
+  }
 
 // Ana sayfadaki selamlama mesajlarında kullanmak için.
   String greeting() {
@@ -387,19 +388,17 @@ class FirestoreDatabaseService {
     await _instance
         .collection("users")
         .doc(currentUser!.uid)
-        .update({"isUserListening": state, "currentlyListeningMusicUrl": url});
+        .update({"isUserListening": state, "songName": url});
   }
 
-  getUserDatasToMatch(
-      currentlyListeningMusicUrl, amIListeningNow, title) async {
+  getUserDatasToMatch(songName, amIListeningNow, title) async {
+    print("Şu method tetiklendi: ${getUserDatasToMatch}");
     // Anlık olarak sürekli olarak o anda eşleşilen kişinin bilgilerini kullanıma hazır tutuyor.
     QuerySnapshot<Map<String, dynamic>> _okunanUser =
         await FirebaseFirestore.instance.collection("users").get();
     for (var item in _okunanUser.docs) {
-      if (item["isUserListening"] &&
-          currentlyListeningMusicUrl == item["currentlyListeningMusicUrl"] &&
-          amIListeningNow) {
-        sendMatchesToDatabase(item["uid"], currentlyListeningMusicUrl, title);
+      if (songName == item["songName"] && amIListeningNow) {
+        sendMatchesToDatabase(item["uid"], songName, songName);
         print(" Eşleşilen kişi: ${item["name"]}");
         print(" Eşleşilen kişinin uid: ${item["uid"]}");
       }
@@ -409,8 +408,7 @@ class FirestoreDatabaseService {
   sendMatchesToDatabase(uid, musicUrl, title) async {
     // Veritabına daha sonradan notifcation sayfasında kullanılmak üzere uid'leri, zamanı ve hangi şarkıyı dinlerken eşleşildiğini gönderir.
     //Böylece eşleşme gerçekleştiği anda aynı yerden veriyi çekerek ekranda gösterilebilir.
-    final previousMatchesRef =
-        _instance.doc("previousMatches/${currentUser!.uid}");
+    final previousMatchesRef = _instance.doc("matches/${currentUser!.uid}");
     previousMatchesRef.collection("previousMatchesList").doc(uid).set({
       "uid": uid,
       "timeStamp": DateTime.now(),
@@ -473,5 +471,23 @@ class FirestoreDatabaseService {
           "Tüm eşleşmelerin olduğu kişilerin Şarkıları: ${tumEslesmelerinParcalari}");
     }
     return tumEslesmelerinParcalari;
+  }
+
+  returnCurrentlyListeningMusicName() async {
+    try {
+      var isActive = false;
+      var songName;
+      isActive = await SpotifySdk.isSpotifyAppActive;
+
+      var _name = SpotifySdk.subscribePlayerState();
+
+      _name.listen((event) async {
+        print("*****************************************************");
+        songName = event.track!.name;
+      });
+      return songName;
+    } catch (e) {
+      print("Spotify is not active or disconnected: $e");
+    }
   }
 }
