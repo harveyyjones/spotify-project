@@ -397,10 +397,10 @@ class FirestoreDatabaseService {
     QuerySnapshot<Map<String, dynamic>> _okunanUser =
         await FirebaseFirestore.instance.collection("users").get();
     for (var item in _okunanUser.docs) {
-      if (songName == item["songName"] && amIListeningNow) {
-        sendMatchesToDatabase(item["uid"], songName, songName);
-        print(" Eşleşilen kişi: ${item["name"]}");
-        print(" Eşleşilen kişinin uid: ${item["uid"]}");
+      if (songName == item["songName"]) {
+        sendMatchesToDatabase(item["userId"], songName, songName);
+        print(" Eslesilen kisi: ${item["name"]}");
+        print(" Eşleşilen kişinin uid: ${item["userId"]}");
       }
     }
   }
@@ -485,7 +485,7 @@ class FirestoreDatabaseService {
         print("*****************************************************");
         songName = event.track!.name;
       });
-      return songName;
+      return songName.toString();
     } catch (e) {
       print("Spotify is not active or disconnected: $e");
     }

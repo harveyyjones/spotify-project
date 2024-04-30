@@ -11,18 +11,18 @@ class ChatDatabaseService extends FirestoreDatabaseService {
 
   @override
   // Mesajları QuerySnapshot türünde çeker.
-  Stream<List<Message>> getMessagesFromStream(
-      String currentUserID, String userIDOfOtherUser) {
-    var snapshot = _fireStore
-        .collection("conversations")
-        .doc("$currentUserID--$userIDOfOtherUser")
-        .collection("messages")
-        .orderBy("date")
-        .snapshots();
-    // Önce dökümanları sırayla ele almak için 1. map() metodunu çağırdık, sonra her bir dökümanı fromMap() metoduna yollamak için ikinci map metodunu çağırdık.
-    return snapshot.map((event) =>
-        event.docs.map((message) => Message.fromMap(message.data())).toList());
-  }
+  // Stream<List<Message>> getMessagesFromStream(
+  //     String currentUserID, String userIDOfOtherUser) {
+  //   var snapshot = _fireStore
+  //       .collection("conversations")
+  //       .doc("$currentUserID--$userIDOfOtherUser")
+  //       .collection("messages")
+  //       .orderBy("date")
+  //       .snapshots();
+  //   // Önce dökümanları sırayla ele almak için 1. map() metodunu çağırdık, sonra her bir dökümanı fromMap() metoduna yollamak için ikinci map metodunu çağırdık.
+  //   return snapshot.map((event) =>
+  //       event.docs.map((message) => Message.fromMap(message!.data())).toList());
+  // }
 
 // Mesajları veritabanına kaydeder.
   Future<bool> sendMessage(Message message) async {

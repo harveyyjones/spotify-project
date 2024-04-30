@@ -8,6 +8,7 @@ import 'package:logger/logger.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
+import 'package:spotify_project/screens/matches_screen.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/image_uri.dart';
@@ -15,7 +16,7 @@ import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
 FutureOr<User?> getCurrentUser() async {
-  var currentUser = await FirebaseAuth.instance.currentUser;
+  var currentUser = FirebaseAuth.instance.currentUser;
   return currentUser;
 }
 
@@ -180,7 +181,7 @@ class _EverythingState extends State<Everything> {
   }
 
   void _startTimer({name}) {
-    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 20), (timer) {
       _updateActiveStatus(name: name);
     });
   }
@@ -204,6 +205,9 @@ class _EverythingState extends State<Everything> {
         _name != null
             ? _service.updateIsUserListening(isActive, event.track!.name)
             : _service.updateIsUserListening(isActive, "");
+
+        firestoreDatabaseService.getUserDatasToMatch(
+            event.track?.name, isActive, event.track?.name);
       });
     } catch (e) {
       print("Spotify is not active or disconnected: $e");
@@ -216,7 +220,7 @@ class _EverythingState extends State<Everything> {
     return Stack(
       children: [
         Container(
-          color: Color.fromARGB(255, 139, 204, 182),
+          color: const Color.fromARGB(255, 139, 204, 182),
         ),
         ListView(
           padding: const EdgeInsets.all(8),

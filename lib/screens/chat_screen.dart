@@ -101,7 +101,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 stream: _chatDBService.getMessagesFromStream(
                     currentUser!.uid, widget.userIDOfOtherUser),
                 builder: (context, snapshot) {
-                  List<Message>? allMessages = snapshot.data;
+                  List<Message>? allMessages = snapshot.data as List<Message>?;
 
                   allMessages?.length;
                   if (snapshot.hasData) {
