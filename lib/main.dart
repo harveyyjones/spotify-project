@@ -87,6 +87,13 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  handleAuthAndTokenForSpotify() async {
+    await _businessLogic
+        .connectToSpotifyRemote()
+        .then((value) => connected = true);
+    await _businessLogic.getAccessToken(clientId, redirectURL);
+  }
+
   late final Logger _logger = Logger(
     printer: PrettyPrinter(
       methodCount: 2,
@@ -100,8 +107,8 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    _businessLogic.connectToSpotifyRemote().then((value) => connected = true);
-    _businessLogic.getAccessToken(clientId, redirectURL);
+    // _businessLogic.connectToSpotifyRemote().then((value) => connected = true);
+    // _businessLogic.getAccessToken(clientId, redirectURL);
 
     super.initState();
   }
@@ -115,6 +122,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    handleAuthAndTokenForSpotify();
     return MaterialApp(
       home: StreamBuilder<ConnectionStatus>(
         stream: SpotifySdk.subscribeConnectionStatus(),

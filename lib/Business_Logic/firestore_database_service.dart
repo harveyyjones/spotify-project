@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,8 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:spotify_project/Business_Logic/Models/message_model.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/screens/sharePostScreen.dart';
+import 'package:spotify_project/screens/steppers.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'Models/user_model.dart';
@@ -350,12 +353,17 @@ class FirestoreDatabaseService {
   }
 
 // Mesajları stream veri tipinde çekerken.
-  getMessagesFromStream(String currentUserID, String userIDOfOtherUser) async {
-    await for (var snapshot in _fireStore.collection("messages").snapshots()) {
-      for (var messages in snapshot.docs) {
-        print(messages.data());
-      }
-    }
+  Stream<List<Message>> getMessagesFromStream(
+      String currentUserID, String userIDOfOtherUser) {
+    var snapshot = _fireStore
+        .collection("conversations")
+        .doc("$currentUserID--$userIDOfOtherUser")
+        .collection("messages")
+        .orderBy("date")
+        .snapshots();
+    // Önce dökümanları sırayla ele almak için 1. map() metodunu çağırdık, sonra her bir dökümanı fromMap() metoduna yollamak için ikinci map metodunu çağırdık.
+    return snapshot.map((event) =>
+        event.docs.map((message) => Message.fromMap(message.data())).toList());
   }
 
 // Kalıcı olarak hesap silme. Hesap silinir ama bilgiler kalır. Bilgileri de silmek için ayrı bir fonksiyon daha kullanılması gerekli.
@@ -418,10 +426,11 @@ class FirestoreDatabaseService {
   }
 
   getMatchesIds() async {
+    print("Şu method tetiklendi getMatchesIds().");
     // Tüm eşleşmelerin Id'lerini döndürür. Daha sonra bilgileri çekmek için kullanılacak.
     List tumEslesmelerinIdsi = [];
-    final previousMatchesRef = await _instance
-        .collection("previousMatches")
+    var previousMatchesRef = await _instance
+        .collection("matches")
         .doc(currentUser!.uid)
         .collection("previousMatchesList")
         .get();
@@ -429,29 +438,28 @@ class FirestoreDatabaseService {
       print(item["uid"]);
       tumEslesmelerinIdsi.add(item["uid"]);
       print("Tüm eşleşmelerin olduğu kişilerin idleri: ${tumEslesmelerinIdsi}");
-      return await tumEslesmelerinIdsi;
+      return tumEslesmelerinIdsi;
     }
   }
 
-  Future getUserDataViaUId() async {
-    // Eşleşilenlerin Id'lerini kullanarak kullanıcı bilgilerini çeken bir fonksiyon. Notifications kısmında ve video altında sergilenirken kullanılabilir.
-    UserModel users;
+  Future<List> getUserDataViaUId() async {
     List usersList = [];
-    List<dynamic> eslesilenlerinIdleri = await getMatchesIds();
-    print("Tüm eşleşmelerin olduğu kişilerin idleri: ${eslesilenlerinIdleri}");
-    QuerySnapshot<Map<String, dynamic>> _okunanUser =
-        await FirebaseFirestore.instance.collection("users").get();
-    for (var item in await _okunanUser.docs) {
-      if (await eslesilenlerinIdleri.contains(item["uid"])) {
-        users = UserModel(
-          name: item["name"],
-          biography: item["biography"],
-          profilePhotoURL: item["profilePhotoURL"],
-        );
-        usersList.add(users);
-        return usersList;
-      }
+
+    var previousMatchesRef = await _instance
+        .collection("matches")
+        .doc(currentUser!.uid)
+        .collection("previousMatchesList")
+        .get();
+    for (var item in previousMatchesRef.docs) {
+      DocumentSnapshot<Map<String, dynamic>> okunanUser =
+          await FirebaseFirestore.instance.doc("users/${item["uid"]}").get();
+      Map<String, dynamic>? okunanUserbilgileriMap = okunanUser.data();
+      UserModel okunanUserBilgileriNesne =
+          UserModel.fromMap(okunanUserbilgileriMap!);
+      print(okunanUserBilgileriNesne.toString());
+      usersList.add(okunanUserBilgileriNesne);
     }
+    return usersList;
   }
 
   getTheMutualSongViaUId() async {
