@@ -212,11 +212,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           Padding(
                             padding: EdgeInsets.only(left: screenWidth / 100),
-                            child: Image.asset(
-                                scale: 1,
-                                fit: BoxFit.fitWidth,
-                                width: screenWidth / 11,
-                                "lib/assets/paper_plane.png"),
+                            child: Icon(Icons.send),
                           )
                         ],
                       ),

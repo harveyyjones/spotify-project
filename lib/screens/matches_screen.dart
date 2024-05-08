@@ -140,7 +140,7 @@ class _CardsFornyificationsState extends State<CardsForNotifications> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: _firestoreDatabaseService.getTheMutualSongViaUId(),
+      future: _firestoreDatabaseService.getTheMutualSongViaUId(widget.userId),
       builder: (context, AsyncSnapshot snapshot) {
         if (snapshot.hasData) {
           return InkWell(
@@ -186,7 +186,7 @@ class _CardsFornyificationsState extends State<CardsForNotifications> {
                         color: Colors.white,
                         child: Text(
                           softWrap: true,
-                          "${widget.name} ile aynı anda  \"${snapshot.data![widget.index].toString()}\" dinlediniz .",
+                          "You've listened \"${snapshot.data!.toString()} with ${widget.name} at the same time.",
                           style: TextStyle(fontSize: 33.sp, height: 1.2),
                         ),
                       ),

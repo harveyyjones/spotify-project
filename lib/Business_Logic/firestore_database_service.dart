@@ -462,7 +462,7 @@ class FirestoreDatabaseService {
     return usersList;
   }
 
-  getTheMutualSongViaUId() async {
+  getTheMutualSongViaUId(uid) async {
     // Ortak bir şey dinlediğimiz kişilerle hangi şarkıda eşleştiğimizi döndüren metod.
 
     List tumEslesmelerinParcalari = [];
@@ -473,12 +473,12 @@ class FirestoreDatabaseService {
         .orderBy("timeStamp", descending: false)
         .get();
     for (var item in previousMatchesRef.docs) {
-      print(item["uid"]);
-      tumEslesmelerinParcalari.add(item["titleOfTheSong"]);
+      if (uid == item["uid"]) {
+        return item["titleOfTheSong"];
+      }
       print(
           "Tüm eşleşmelerin olduğu kişilerin Şarkıları: ${tumEslesmelerinParcalari}");
     }
-    return tumEslesmelerinParcalari;
   }
 
   returnCurrentlyListeningMusicName() async {

@@ -88,10 +88,10 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   handleAuthAndTokenForSpotify() async {
-    await _businessLogic
-        .connectToSpotifyRemote()
-        .then((value) => connected = true);
-    await _businessLogic.getAccessToken(clientId, redirectURL);
+    await _businessLogic.getAccessToken(clientId, redirectURL).then((value) =>
+        _businessLogic
+            .connectToSpotifyRemote()
+            .then((value) => connected = true));
   }
 
   late final Logger _logger = Logger(
@@ -104,14 +104,6 @@ class _HomeState extends State<Home> {
       printTime: true,
     ),
   );
-
-  @override
-  void initState() {
-    // _businessLogic.connectToSpotifyRemote().then((value) => connected = true);
-    // _businessLogic.getAccessToken(clientId, redirectURL);
-
-    super.initState();
-  }
 
   @override
   void dispose() {

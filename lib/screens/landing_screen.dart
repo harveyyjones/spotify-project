@@ -31,7 +31,7 @@ class _LandingPageState extends State<LandingPage> {
               style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
             Text(
-              "rubycure.",
+              "Musee.",
               style: GoogleFonts.playfairDisplay(
                   fontSize: 100.sp, fontWeight: FontWeight.bold),
             ),

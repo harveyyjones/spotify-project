@@ -286,115 +286,11 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                               ),
                             ),
                           ),
-                          SizedBox(
-                            height: screenHeight / 66,
-                          ),
-                          Container(
-                            width: MediaQuery.of(context).size.width - 160.w,
-                            height: screenHeight / 7.5,
-                            color: Colors.transparent,
-                            child: Card(
-                              elevation: 5,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(22),
-                              ),
-                              child: Padding(
-                                padding:
-                                    EdgeInsets.only(left: 40.w, right: 15.w),
-                                child: TextFormField(
-                                    autovalidateMode:
-                                        AutovalidateMode.onUserInteraction,
-                                    validator: (value) {
-                                      if (value!.length < 100) {
-                                        _databaseService
-                                            .updateClinicName(value);
-                                      } else {
-                                        return "Too long!";
-                                      }
-                                    },
-                                    onChanged: (value) {
-                                      if (value.length < 200) {
-                                        _databaseService
-                                            .updateClinicName(value);
-                                      }
-                                    },
-                                    controller: clinicNameController,
-                                    obscureText: false,
-                                    style: TextStyle(
-                                        height: 0.9,
-                                        fontSize: 33.sp,
-                                        fontFamily: "Calisto",
-                                        fontWeight: FontWeight.w500),
-                                    maxLines: 3,
-                                    decoration: InputDecoration(
-                                      border: InputBorder.none,
-                                      label: Text(
-                                        "Clinic Name",
-                                        style: TextStyle(
-                                            fontSize: 27.sp,
-                                            fontFamily: "Calisto",
-                                            color: const Color.fromARGB(
-                                                129, 42, 41, 41)),
-                                      ),
-                                    )),
-                              ),
-                            ),
-                          ),
 
-                          // ********************** Major Info **********************************
-                          Container(
-                            width: MediaQuery.of(context).size.width - 160.w,
-                            height: screenHeight / 10,
-                            color: Colors.transparent,
-                            child: Card(
-                              elevation: 5,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(22),
-                              ),
-                              child: Padding(
-                                padding:
-                                    EdgeInsets.only(left: 40.w, right: 15.w),
-                                child: TextFormField(
-                                    autovalidateMode:
-                                        AutovalidateMode.onUserInteraction,
-                                    validator: (value) {
-                                      if (value!.length < 200) {
-                                        _databaseService.updateMajorInfo(value);
-                                      } else {
-                                        return "Too long!";
-                                      }
-                                    },
-                                    onChanged: (value) {
-                                      if (value.length < 200) {
-                                        _databaseService.updateMajorInfo(value);
-                                      }
-                                    },
-                                    controller: majorInfoController,
-                                    obscureText: false,
-                                    style: TextStyle(
-                                        height: 0.9,
-                                        fontSize: 33.sp,
-                                        fontFamily: "Calisto",
-                                        fontWeight: FontWeight.w500),
-                                    maxLines: 1,
-                                    decoration: InputDecoration(
-                                      border: InputBorder.none,
-                                      label: Text(
-                                        "Major",
-                                        style: TextStyle(
-                                            fontSize: 27.sp,
-                                            fontFamily: "Calisto",
-                                            color: const Color.fromARGB(
-                                                129, 42, 41, 41)),
-                                      ),
-                                    )),
-                              ),
-                            ),
-                          ),
                           SizedBox(
                             height: screenHeight / 66,
                           ),
-                          // ************************ Clinic Location ****************************
+                          // ************************ Location ****************************
                           Container(
                             width: MediaQuery.of(context).size.width - 160.w,
                             height: screenHeight / 10,
@@ -436,7 +332,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                                     decoration: InputDecoration(
                                       border: InputBorder.none,
                                       label: Text(
-                                        "Clinic Location",
+                                        "Location",
                                         style: TextStyle(
                                             fontSize: 27.sp,
                                             fontFamily: "Calisto",
