@@ -74,31 +74,30 @@ class _MatchesScreenState extends State<MatchesScreen> {
                       ),
                       itemCount: snapshot.data.length,
                       itemBuilder: (BuildContext context, int index) {
-                        return index == 0
-                            ? Column(
-                                children: [
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: screenHeight / 15,
-                                  ),
-                                  Text(
-                                    "Something",
-                                    style: TextStyle(
-                                        fontSize: 70.sp,
-                                        fontWeight: FontWeight.w300),
-                                  ),
-                                  SizedBox(
-                                    height: screenHeight / 22,
-                                  ),
-                                ],
-                              )
-                            : CardsForNotifications(
-                                name: snapshot.data[index].name,
-                                profilePhotoUrl:
-                                    snapshot.data[index].profilePhotoURL,
-                                index: index,
-                                userId: snapshot.data[index].userId,
-                              );
+                        // return index == 0
+                        //     ? Column(
+                        //         children: [
+                        //           SizedBox(
+                        //             width: double.infinity,
+                        //             height: screenHeight / 15,
+                        //           ),
+                        //           Text(
+                        //             "Something",
+                        //             style: TextStyle(
+                        //                 fontSize: 70.sp,
+                        //                 fontWeight: FontWeight.w300),
+                        //           ),
+                        SizedBox(
+                          height: screenHeight / 22,
+                        );
+                        //         ],
+                        //       ):
+                        return CardsForNotifications(
+                          name: snapshot.data[index].name,
+                          profilePhotoUrl: snapshot.data[index].profilePhotoURL,
+                          index: index,
+                          userId: snapshot.data[index].userId,
+                        );
                       },
                     ),
                   ),
