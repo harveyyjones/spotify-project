@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spotify_project/screens/login_page.dart';
@@ -26,29 +27,19 @@ class _LandingPageState extends State<LandingPage> {
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 4.5,
             ),
-            Text(
-              "Welcome to",
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-            Text(
-              "Musee.",
-              style: GoogleFonts.playfairDisplay(
-                  fontSize: 100.sp, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(
-              height: screenHeight / 4,
-            ),
-            GeneralButton("Login", LoginPage()),
-            SizedBox(
-              height: screenHeight / 20,
-              child: Center(
-                child: Text(
-                  "or",
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-            GeneralButton("Register", RegisterPage()),
+            const LandingElement(),
+            GeneralButton(
+                "Login", LoginPage(), Color.fromARGB(255, 28, 141, 60)),
+            // SizedBox(
+            //   height: screenHeight / 20,
+            //   child: Center(
+            //     child: Text(
+            //       "or",
+            //       style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            //     ),
+            //   ),
+            // ),
+            GeneralButton("Register", RegisterPage(), Colors.black),
           ],
         ),
       ),
@@ -57,7 +48,8 @@ class _LandingPageState extends State<LandingPage> {
 }
 
 class GeneralButton extends StatelessWidget {
-  GeneralButton(this.text, this.route);
+  GeneralButton(this.text, this.route, this.color);
+  Color? color;
   String? text;
   var route;
   @override
@@ -69,10 +61,10 @@ class GeneralButton extends StatelessWidget {
         builder: (context) => route,
       )),
       child: Container(
-        decoration: const BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.all(
-              Radius.circular(3),
+        decoration: BoxDecoration(
+            color: color ?? Colors.black,
+            borderRadius: const BorderRadius.all(
+              Radius.circular(30),
             )),
         width: screenWidth / 2.5,
         height: screenHeight / 12,
@@ -84,6 +76,18 @@ class GeneralButton extends StatelessWidget {
                   color: Colors.white)),
         ),
       ),
+    );
+  }
+}
+
+class LandingElement extends StatelessWidget {
+  const LandingElement({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      backgroundImage: AssetImage("lib/assets/arcticmonkeys.jpg"),
+      foregroundImage: AssetImage("lib/assets/arcticmonkeys.jpg"),
     );
   }
 }

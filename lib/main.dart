@@ -68,7 +68,7 @@ class MyApp extends StatelessWidget {
                   "************************************************************");
               print("Şu anda bir oturum açık.");
 
-              return const Home();
+              return LandingPage();
             } else {
               return LandingPage();
             }
