@@ -27,18 +27,11 @@ class _LandingPageState extends State<LandingPage> {
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 4.5,
             ),
-            const LandingElement(),
+            LandingElement(
+              uri: "arcticmonkeys",
+            ),
             GeneralButton(
                 "Login", LoginPage(), Color.fromARGB(255, 28, 141, 60)),
-            // SizedBox(
-            //   height: screenHeight / 20,
-            //   child: Center(
-            //     child: Text(
-            //       "or",
-            //       style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            //     ),
-            //   ),
-            // ),
             GeneralButton("Register", RegisterPage(), Colors.black),
           ],
         ),
@@ -81,13 +74,17 @@ class GeneralButton extends StatelessWidget {
 }
 
 class LandingElement extends StatelessWidget {
-  const LandingElement({super.key});
+  LandingElement({super.key, required this.uri});
+  String uri;
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      backgroundImage: AssetImage("lib/assets/arcticmonkeys.jpg"),
-      foregroundImage: AssetImage("lib/assets/arcticmonkeys.jpg"),
+    return Container(
+      child: CircleAvatar(
+        radius: 80.sp,
+        // backgroundImage: AssetImage("lib/assets/arcticmonkeys.jpg"),
+        foregroundImage: AssetImage("lib/assets/${uri}.jpg"),
+      ),
     );
   }
 }
