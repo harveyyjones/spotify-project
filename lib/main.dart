@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:logger/logger.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
+import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
 import 'package:spotify_project/screens/matches_screen.dart';
@@ -68,7 +69,7 @@ class MyApp extends StatelessWidget {
                   "************************************************************");
               print("Şu anda bir oturum açık.");
 
-              return LandingPage();
+              return Home();
             } else {
               return LandingPage();
             }
@@ -116,6 +117,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     handleAuthAndTokenForSpotify();
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: StreamBuilder<ConnectionStatus>(
         stream: SpotifySdk.subscribeConnectionStatus(),
         builder: (context, snapshot) {
@@ -127,23 +129,6 @@ class _HomeState extends State<Home> {
                 "************** Is connected? :  ${connected} *******************");
           }
           return Scaffold(
-            appBar: AppBar(
-              actions: [
-                IconButton(
-                  onPressed: () async {
-                    await _service.signOut(context);
-                    Navigator.pushAndRemoveUntil<dynamic>(
-                      context,
-                      MaterialPageRoute<dynamic>(
-                        builder: (BuildContext context) => LandingPage(),
-                      ),
-                      (route) => true,
-                    );
-                  },
-                  icon: const Icon(Icons.delete),
-                ),
-              ],
-            ),
             bottomNavigationBar: BottomBar(selectedIndex: 0),
             body: Everything(connected),
           );
@@ -220,22 +205,11 @@ class _EverythingState extends State<Everything> {
     return Stack(
       children: [
         Container(
-          color: const Color.fromARGB(255, 139, 204, 182),
+          color: Color.fromARGB(255, 234, 243, 252),
         ),
         ListView(
           padding: const EdgeInsets.all(8),
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    _businessLogic.connectToSpotifyRemote();
-                  },
-                  child: const Icon(Icons.settings_remote),
-                ),
-              ],
-            ),
             widget.connected
                 ? StreamBuilder<PlayerState>(
                     stream: SpotifySdk.subscribePlayerState(),
@@ -254,6 +228,9 @@ class _EverythingState extends State<Everything> {
 //TODO: Aşağıya bir şekilde stream entegre et.
                         return Column(
                           children: <Widget>[
+                            SizedBox(
+                              height: screenHeight / 10,
+                            ),
                             FutureBuilder(
                               future: SpotifySdk.getImage(
                                 imageUri: track.imageUri,

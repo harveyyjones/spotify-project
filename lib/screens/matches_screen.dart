@@ -74,19 +74,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
                       ),
                       itemCount: snapshot.data.length,
                       itemBuilder: (BuildContext context, int index) {
-                        // return index == 0
-                        //     ? Column(
-                        //         children: [
-                        //           SizedBox(
-                        //             width: double.infinity,
-                        //             height: screenHeight / 15,
-                        //           ),
-                        //           Text(
-                        //             "Something",
-                        //             style: TextStyle(
-                        //                 fontSize: 70.sp,
-                        //                 fontWeight: FontWeight.w300),
-                        //           ),
                         SizedBox(
                           height: screenHeight / 22,
                         );
@@ -105,9 +92,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
               );
             } else {
               //TODO: Buralara daha güzel gözüken bir loading ekranı ayarlanacak.
-              return Center(
+              return const Center(
                   child: CircularProgressIndicator(
-                color: const Color.fromARGB(255, 168, 58, 58),
+                color: Color.fromARGB(255, 0, 0, 0),
               ));
             }
           }),
@@ -133,7 +120,7 @@ class CardsForNotifications extends StatefulWidget {
 }
 
 class _CardsFornyificationsState extends State<CardsForNotifications> {
-  FirestoreDatabaseService _firestoreDatabaseService =
+  final FirestoreDatabaseService _firestoreDatabaseService =
       FirestoreDatabaseService();
 
   @override
@@ -148,9 +135,6 @@ class _CardsFornyificationsState extends State<CardsForNotifications> {
               builder: (context) => ChatScreen(
                   widget.userId, widget.profilePhotoUrl, widget.name),
             )),
-            // onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            //   builder: (context) => ChatScreen(),
-            // )),
             child: Container(
               decoration: BoxDecoration(boxShadow: [
                 BoxShadow(

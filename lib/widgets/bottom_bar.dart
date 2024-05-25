@@ -37,12 +37,12 @@ class _BottomBarState extends State<BottomBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xfff2f9ff),
+      color: Color.fromARGB(255, 9, 129, 249),
       height: screenHeight / 14,
       child: FutureBuilder(
         future: _firestoreDatabaseService.getUserData(),
         builder: (context, snapshot) => BottomNavigationBar(
-            backgroundColor: const Color(0xfff2f9ff),
+            backgroundColor: Color.fromARGB(255, 4, 74, 145),
             selectedItemColor: Colors.blue,
             selectedFontSize: 0,
             currentIndex: widget.selectedIndex,

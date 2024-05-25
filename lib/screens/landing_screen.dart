@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spotify_project/screens/login_page.dart';
@@ -27,11 +28,40 @@ class _LandingPageState extends State<LandingPage> {
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 4.5,
             ),
-            LandingElement(
-              uri: "arcticmonkeys",
+            Text(
+              softWrap: true,
+              "Welcome to Musee!",
+              style: GoogleFonts.alata(
+                textStyle: TextStyle(
+                    fontSize: 66.sp,
+                    color: const Color.fromARGB(255, 0, 0, 0),
+                    letterSpacing: .5),
+              ),
+            ),
+            SizedBox(
+              height: screenHeight / 55,
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: screenWidth / 33),
+              child: Text(
+                softWrap: true,
+                "After creating an account, just play a music in Spotify and start being matched!",
+                style: GoogleFonts.alata(
+                  textStyle: TextStyle(
+                      fontSize: 33.sp,
+                      color: const Color.fromARGB(255, 0, 0, 0),
+                      letterSpacing: .5),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: screenHeight / 4,
             ),
             GeneralButton(
                 "Login", LoginPage(), Color.fromARGB(255, 28, 141, 60)),
+            SizedBox(
+              height: screenHeight / 15,
+            ),
             GeneralButton("Register", RegisterPage(), Colors.black),
           ],
         ),
