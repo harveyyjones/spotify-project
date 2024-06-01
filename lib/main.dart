@@ -115,7 +115,8 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    handleAuthAndTokenForSpotify();
+    // TODO: Use the below part in comment during debugging thus it prevents the hot restart.
+    // handleAuthAndTokenForSpotify();
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<ConnectionStatus>(
@@ -187,9 +188,8 @@ class _EverythingState extends State<Everything> {
         print("*****************************************************");
         print(isActive);
         print(event.track?.name ?? "");
-        _name != null
-            ? _service.updateIsUserListening(isActive, event.track!.name)
-            : _service.updateIsUserListening(isActive, "");
+
+        _service.updateIsUserListening(isActive, event.track!.name);
 
         firestoreDatabaseService.getUserDatasToMatch(
             event.track?.name, isActive, event.track?.name);

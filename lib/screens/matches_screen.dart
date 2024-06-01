@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/screens/chat_screen.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
+import 'package:spotify_project/widgets/swipe_card.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
+import 'package:swipe_cards/swipe_cards.dart';
 
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({super.key});
@@ -63,31 +66,14 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     width: double.infinity,
                   ),
                   Container(
-                    width: screenWidth - 30,
-                    height: screenHeight /
-                        (13 /
-                            12), // Bu şekilde ondalık sayı yerine kesirli sayı kullanmanız sayıların değerlerini orantılı olarak yükselterek hassas ölçümler yapmanızı sağlar.
-                    //  color: Colors.black,
-                    child: ListView.separated(
-                      separatorBuilder: (context, index) => SizedBox(
-                        height: screenHeight / 45,
-                      ),
-                      itemCount: snapshot.data.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        SizedBox(
-                          height: screenHeight / 22,
-                        );
-                        //         ],
-                        //       ):
-                        return CardsForNotifications(
-                          name: snapshot.data[index].name,
-                          profilePhotoUrl: snapshot.data[index].profilePhotoURL,
-                          index: index,
-                          userId: snapshot.data[index].userId,
-                        );
-                      },
-                    ),
-                  ),
+                      width: screenWidth - 30,
+                      height: screenHeight /
+                          (13 /
+                              12), // Bu şekilde ondalık sayı yerine kesirli sayı kullanmanız sayıların değerlerini orantılı olarak yükselterek hassas ölçümler yapmanızı sağlar.
+                      //  color: Colors.black,
+                      child: SwipeCardWidget(
+                        snapshotData: snapshot.data,
+                      )),
                 ]),
               );
             } else {
@@ -111,7 +97,7 @@ class CardsForNotifications extends StatefulWidget {
     super.key,
     required this.name,
     required this.profilePhotoUrl,
-    required this.index,
+    this.index,
     required this.userId,
   });
 
