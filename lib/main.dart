@@ -116,7 +116,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     // TODO: Use the below part in comment during debugging thus it prevents the hot restart.
-    // handleAuthAndTokenForSpotify();
+    handleAuthAndTokenForSpotify();
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<ConnectionStatus>(

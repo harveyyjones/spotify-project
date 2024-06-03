@@ -421,8 +421,20 @@ class FirestoreDatabaseService {
       "uid": uid,
       "timeStamp": DateTime.now(),
       "url": musicUrl,
-      "titleOfTheSong": title
+      "titleOfTheSong": title,
+      "isLiked": null
     }).then((value) => print("İşlem başarılı"));
+  }
+
+  updateIsLiked(value, uidOfTheMatch) async {
+    // Updates if liked to use later in the notification screen. (Or to not to show the swipe cards.)
+    await _instance
+        .collection("matches")
+        .doc(currentUser!.uid)
+        .collection("previousMatchesList")
+        .doc(uidOfTheMatch)
+        .update({"isLiked": value}).then(
+            (value) => print("Update isLiked succesfull."));
   }
 
   getMatchesIds() async {
