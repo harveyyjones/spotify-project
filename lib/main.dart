@@ -3,18 +3,22 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
-import 'package:spotify_project/screens/matches_screen.dart';
+import 'package:spotify_project/screens/matches_screen.dart' as prefix;
 import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/image_uri.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
+
+import 'screens/quick_match_screen.dart';
 
 FutureOr<User?> getCurrentUser() async {
   var currentUser = FirebaseAuth.instance.currentUser;
@@ -69,7 +73,7 @@ class MyApp extends StatelessWidget {
                   "************************************************************");
               print("Şu anda bir oturum açık.");
 
-              return Home();
+              return const Home();
             } else {
               return LandingPage();
             }
@@ -116,7 +120,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     // TODO: Use the below part in comment during debugging thus it prevents the hot restart.
-    handleAuthAndTokenForSpotify();
+    // handleAuthAndTokenForSpotify();
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<ConnectionStatus>(
@@ -205,7 +209,7 @@ class _EverythingState extends State<Everything> {
     return Stack(
       children: [
         Container(
-          color: Color.fromARGB(255, 234, 243, 252),
+          color: const Color.fromARGB(255, 234, 243, 252),
         ),
         ListView(
           padding: const EdgeInsets.all(8),
@@ -229,7 +233,49 @@ class _EverythingState extends State<Everything> {
                         return Column(
                           children: <Widget>[
                             SizedBox(
-                              height: screenHeight / 10,
+                              height: screenHeight / 15,
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            QuickMatchesScreen()));
+                              },
+                              child: Container(
+                                width: screenWidth / 1.5,
+                                height: screenHeight / 10,
+                                decoration: const BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(21)),
+                                    color: Color.fromARGB(255, 92, 190, 214),
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color:
+                                              Color.fromRGBO(66, 66, 66, 0.244),
+                                          spreadRadius: 1,
+                                          offset: Offset(
+                                            2,
+                                            10,
+                                          ),
+                                          blurRadius: 10)
+                                    ]),
+                                child: Center(
+                                    child: Text(
+                                  "Quick Match",
+                                  style: GoogleFonts.alata(
+                                    textStyle: TextStyle(
+                                        fontSize: 48.sp,
+                                        color: const Color.fromARGB(
+                                            255, 255, 255, 255),
+                                        letterSpacing: .5),
+                                  ),
+                                )),
+                              ),
+                            ),
+                            SizedBox(
+                              height: screenHeight / 600,
                             ),
                             FutureBuilder(
                               future: SpotifySdk.getImage(
@@ -247,13 +293,8 @@ class _EverythingState extends State<Everything> {
                                     child: Image.memory(snapshot.data!),
                                   );
                                 } else {
-                                  return Center(
-                                    child: Container(
-                                      width: 40,
-                                      height: 40,
-                                      color: Colors.amber,
-                                    ),
-                                  );
+                                  return const Center(
+                                      child: CircularProgressIndicator());
                                 }
                               },
                             ),

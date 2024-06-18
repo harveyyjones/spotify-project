@@ -64,8 +64,8 @@ class FirestoreDatabaseService {
     }
   }
 
-// Tüm hesapları Home sayfasında display etmek için hepsini çeker.
   getAllUsersData() async {
+// Tüm hesapları Home sayfasında display etmek için hepsini çeker.
     UserModel? okunanUserBilgileriNesne;
 
     QuerySnapshot querySnapshot =
@@ -77,9 +77,9 @@ class FirestoreDatabaseService {
     for (DocumentSnapshot user in users) {
       Map<String, dynamic> userData = user.data() as Map<String, dynamic>;
       okunanUserBilgileriNesne = UserModel.fromMap(userData);
-      if (okunanUserBilgileriNesne.clinicOwner == true) {
-        dataList.add(okunanUserBilgileriNesne);
-      }
+
+      dataList.add(okunanUserBilgileriNesne);
+
       print(dataList);
     }
 
@@ -435,6 +435,16 @@ class FirestoreDatabaseService {
         .doc(uidOfTheMatch)
         .update({"isLiked": value}).then(
             (value) => print("Update isLiked succesfull."));
+  }
+
+  updateIsLikedAsQuickMatch(value, uidOfTheMatch) async {
+    // Updates if liked to use later in the notification screen. (Or to not to show the swipe cards.)
+    final previousMatchesRef = _instance.doc("matches/${currentUser!.uid}");
+    previousMatchesRef.collection("quickMatchesList").doc(uidOfTheMatch).set({
+      "uid": uidOfTheMatch,
+      "timeStamp": DateTime.now(),
+      "isLiked": value
+    }).then((value) => print("İşlem başarılı"));
   }
 
   getMatchesIds() async {
