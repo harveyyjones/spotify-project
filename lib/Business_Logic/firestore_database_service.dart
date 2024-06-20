@@ -118,12 +118,23 @@ class FirestoreDatabaseService {
     return ref;
   }
 
-  // Tüm paylaşılan postları çeker.
   getAllSharedPosts() {
+    // Tüm paylaşılan postları çeker, tabi kendi paylaştıkları.
     print("Tıklandı");
     return _instance
         .collection("users")
         .doc(currentUser!.uid)
+        .collection("sharedPosts")
+        .orderBy("timeStamp", descending: true)
+        .snapshots();
+  }
+
+  getAllSharedPostsOfSomeone(uid) {
+    // Tüm paylaşılan postları çeker, ancak başka bir kullanıcının.
+    print("Tıklandı");
+    return _instance
+        .collection("users")
+        .doc(uid)
         .collection("sharedPosts")
         .orderBy("timeStamp", descending: true)
         .snapshots();

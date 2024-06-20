@@ -36,22 +36,44 @@ class _MessageScreenState extends State<MessageScreen> {
           padding: EdgeInsets.only(top: 22.h),
           child: Column(
             children: [
+              // ******************** LIKED PEOPLE DISPLAY *************************
               Padding(
                 padding: EdgeInsets.only(
                     top: screenHeight / 35, bottom: screenHeight / 50),
                 child: Container(
-                  width: screenWidth / 1.2,
-                  height: screenHeight / 10,
-                  color: Colors.amber,
+                  width: screenWidth / 1.1,
+                  height: screenHeight / 8,
+                  color: Color.fromARGB(0, 211, 176, 73),
                   child: FutureBuilder<List<UserModel>>(
                     future: firestoreDatabaseService.getLikedPeople(),
                     builder:
                         (context, AsyncSnapshot<List<UserModel>> snapshot) {
                       if (snapshot.hasData) {
                         return ListView.builder(
+                          physics: const ScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics()),
+                          scrollDirection: Axis.horizontal,
                           itemCount: snapshot.data?.length,
                           itemBuilder: (context, index) {
-                            return Text(snapshot.data![index].name.toString());
+                            return Padding(
+                              padding: EdgeInsets.only(left: screenWidth / 60),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(CupertinoPageRoute(
+                                    builder: (context) => ChatScreen(
+                                        snapshot.data![index].userId.toString(),
+                                        snapshot.data![index].profilePhotoURL,
+                                        snapshot.data![index].name.toString()),
+                                  ));
+                                },
+                                child: CircleAvatar(
+                                  minRadius: 30,
+                                  maxRadius: 70.sp,
+                                  foregroundImage: NetworkImage(
+                                      snapshot.data![index].profilePhotoURL),
+                                ),
+                              ),
+                            );
                           },
                         );
                       } else {
@@ -60,6 +82,9 @@ class _MessageScreenState extends State<MessageScreen> {
                     },
                   ),
                 ),
+              ),
+              Divider(
+                color: Color.fromARGB(102, 0, 0, 0),
               ),
               Expanded(
                 // Konuştuklarımın ID'lerini vesaire çektiğim kısım.

@@ -9,16 +9,14 @@ import 'package:spotify_project/screens/profile_settings.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
 
-class OwnProfileScreenForClients extends StatefulWidget {
-  OwnProfileScreenForClients({Key? key}) : super(key: key);
-
+class ProfileScreen extends StatefulWidget {
+  ProfileScreen({Key? key, required this.uid}) : super(key: key);
+  String uid;
   @override
-  State<OwnProfileScreenForClients> createState() =>
-      _OwnProfileScreenForClientsState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _OwnProfileScreenForClientsState
-    extends State<OwnProfileScreenForClients> {
+class _ProfileScreenState extends State<ProfileScreen> {
   ScrollController _scrollController = ScrollController();
 
   String get text => "Message";
@@ -27,17 +25,14 @@ class _OwnProfileScreenForClientsState
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: _serviceForSnapshot.getUserData(),
+        future: _serviceForSnapshot.getUserDataForDetailPage(widget.uid),
         builder: (context, snapshot) => snapshot.hasData
             ? Scaffold(
-                floatingActionButton: FloatingActionButton(
-                  // backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  child: Icon(Icons.plus_one),
-                  onPressed: () async {
-                    await _serviceForSnapshot.sharePost(
-                        ImageSource.gallery, context);
-                  },
+                appBar: AppBar(
+                  backgroundColor: Colors.transparent,
+                  leading: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.arrow_back_ios)),
                 ),
                 backgroundColor: Color(0xfff2f9ff),
                 bottomNavigationBar: snapshot.data!.clinicOwner ?? true
@@ -49,7 +44,8 @@ class _OwnProfileScreenForClientsState
                   child: Column(
                     children: [
                       FutureBuilder(
-                          future: _serviceForSnapshot.getUserData(),
+                          future: _serviceForSnapshot
+                              .getUserDataForDetailPage(widget.uid),
                           builder: (context, snapshot) {
                             if (snapshot.hasData) {
                               return Container(
@@ -89,25 +85,6 @@ class _OwnProfileScreenForClientsState
                                             ),
                                           ),
                                         ),
-                                        Positioned(
-                                            top: screenHeight / 3.4,
-                                            right: screenWidth / 3.8,
-                                            child: InkWell(
-                                              onTap: () {
-                                                Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          ProfileSettings(),
-                                                    ));
-                                              },
-                                              child: Hero(
-                                                  tag: "Profile Screen",
-                                                  child: Icon(
-                                                    Icons.settings,
-                                                    size: 80.sp,
-                                                  )),
-                                            )),
                                       ],
                                     ),
                                     SizedBox(
@@ -243,7 +220,8 @@ class _OwnProfileScreenForClientsState
                           }),
                       // ******************** Postlar burada başlıyor. **********************
                       StreamBuilder(
-                          stream: _serviceForSnapshot.getAllSharedPosts(),
+                          stream: _serviceForSnapshot
+                              .getAllSharedPostsOfSomeone(widget.uid),
                           builder: (context, snapshot) {
                             if (snapshot.hasData) {
                               QuerySnapshot querySnapshot =

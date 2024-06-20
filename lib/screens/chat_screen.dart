@@ -2,12 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spotify_project/Business_Logic/Models/message_model.dart';
 import 'package:spotify_project/Business_Logic/chat_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/screens/message_box.dart';
+import 'package:spotify_project/screens/profile_screen.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/screens/steppers.dart';
 import 'package:spotify_project/widgets/divider_for_chat.dart';
@@ -54,10 +56,21 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 50.sp,
-                  backgroundImage: NetworkImage(
-                    widget.profileURL,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(CupertinoPageRoute(
+                      builder: (context) {
+                        return ProfileScreen(
+                          uid: widget.userIDOfOtherUser,
+                        );
+                      },
+                    ));
+                  },
+                  child: CircleAvatar(
+                    radius: 50.sp,
+                    backgroundImage: NetworkImage(
+                      widget.profileURL,
+                    ),
                   ),
                 ),
                 Padding(
@@ -137,7 +150,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       height: screenHeight / 15,
                       decoration: BoxDecoration(
                           color: Colors.white,
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
                                 blurRadius: 12,
                                 color: Color.fromARGB(36, 105, 105, 105),

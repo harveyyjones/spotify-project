@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
+import 'package:spotify_project/screens/chat_screen.dart';
 import 'package:spotify_project/screens/matches_screen.dart';
 import 'package:swipe_cards/draggable_card.dart';
 import 'package:swipe_cards/swipe_cards.dart';
@@ -40,6 +41,12 @@ class _MyHomePageState extends State<SwipeCardWidgetForQuickMatch> {
       _swipeItems.add(SwipeItem(likeAction: () {
         _firestoreDatabaseService.updateIsLikedAsQuickMatch(
             true, widget.snapshotData[i].userId);
+        Navigator.of(context).push(CupertinoPageRoute(
+          builder: (context) => ChatScreen(
+              widget.snapshotData[i].userId,
+              widget.snapshotData[i].profilePhotoURL,
+              widget.snapshotData[i].name),
+        ));
 
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Color.fromARGB(255, 9, 184, 178),

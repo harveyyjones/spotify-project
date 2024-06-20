@@ -214,6 +214,49 @@ class _EverythingState extends State<Everything> {
         ListView(
           padding: const EdgeInsets.all(8),
           children: [
+            SizedBox(
+              height: screenHeight / 15,
+              // *********************** QUICK MATCH BUTTON ********************
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => QuickMatchesScreen()));
+              },
+              child: Padding(
+                padding: EdgeInsets.only(
+                    left: screenWidth / 20, right: screenWidth / 20),
+                child: Container(
+                  width: screenWidth / 1.5,
+                  height: screenHeight / 10,
+                  decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.all(Radius.circular(21)),
+                      color: Color.fromARGB(255, 92, 190, 214),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Color.fromRGBO(66, 66, 66, 0.244),
+                            spreadRadius: 1,
+                            offset: Offset(
+                              2,
+                              10,
+                            ),
+                            blurRadius: 10)
+                      ]),
+                  child: Center(
+                      child: Text(
+                    "Quick Match",
+                    style: GoogleFonts.alata(
+                      textStyle: TextStyle(
+                          fontSize: 48.sp,
+                          color: const Color.fromARGB(255, 255, 255, 255),
+                          letterSpacing: .5),
+                    ),
+                  )),
+                ),
+              ),
+            ),
             widget.connected
                 ? StreamBuilder<PlayerState>(
                     stream: SpotifySdk.subscribePlayerState(),
@@ -232,48 +275,6 @@ class _EverythingState extends State<Everything> {
 //TODO: Aşağıya bir şekilde stream entegre et.
                         return Column(
                           children: <Widget>[
-                            SizedBox(
-                              height: screenHeight / 15,
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            QuickMatchesScreen()));
-                              },
-                              child: Container(
-                                width: screenWidth / 1.5,
-                                height: screenHeight / 10,
-                                decoration: const BoxDecoration(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(21)),
-                                    color: Color.fromARGB(255, 92, 190, 214),
-                                    boxShadow: [
-                                      BoxShadow(
-                                          color:
-                                              Color.fromRGBO(66, 66, 66, 0.244),
-                                          spreadRadius: 1,
-                                          offset: Offset(
-                                            2,
-                                            10,
-                                          ),
-                                          blurRadius: 10)
-                                    ]),
-                                child: Center(
-                                    child: Text(
-                                  "Quick Match",
-                                  style: GoogleFonts.alata(
-                                    textStyle: TextStyle(
-                                        fontSize: 48.sp,
-                                        color: const Color.fromARGB(
-                                            255, 255, 255, 255),
-                                        letterSpacing: .5),
-                                  ),
-                                )),
-                              ),
-                            ),
                             SizedBox(
                               height: screenHeight / 600,
                             ),
