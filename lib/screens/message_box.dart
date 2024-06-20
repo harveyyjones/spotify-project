@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:spotify_project/Business_Logic/Models/conversations_in_message_box.dart';
 import 'package:spotify_project/Business_Logic/Models/user_model.dart';
 import 'package:spotify_project/Business_Logic/chat_database_service.dart';
+import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/screens/chat_screen.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
@@ -18,6 +19,8 @@ class MessageScreen extends StatefulWidget {
 }
 
 class _MessageScreenState extends State<MessageScreen> {
+  FirestoreDatabaseService firestoreDatabaseService =
+      FirestoreDatabaseService();
   ChatDatabaseService _chatDatabaseService = ChatDatabaseService();
   ScaffoldMessengerState snackBar = ScaffoldMessengerState();
 
@@ -33,6 +36,31 @@ class _MessageScreenState extends State<MessageScreen> {
           padding: EdgeInsets.only(top: 22.h),
           child: Column(
             children: [
+              Padding(
+                padding: EdgeInsets.only(
+                    top: screenHeight / 35, bottom: screenHeight / 50),
+                child: Container(
+                  width: screenWidth / 1.2,
+                  height: screenHeight / 10,
+                  color: Colors.amber,
+                  child: FutureBuilder<List<UserModel>>(
+                    future: firestoreDatabaseService.getLikedPeople(),
+                    builder:
+                        (context, AsyncSnapshot<List<UserModel>> snapshot) {
+                      if (snapshot.hasData) {
+                        return ListView.builder(
+                          itemCount: snapshot.data?.length,
+                          itemBuilder: (context, index) {
+                            return Text(snapshot.data![index].name.toString());
+                          },
+                        );
+                      } else {
+                        return Center(child: CircularProgressIndicator());
+                      }
+                    },
+                  ),
+                ),
+              ),
               Expanded(
                 // Konuştuklarımın ID'lerini vesaire çektiğim kısım.
                 child: FutureBuilder<List<Conversations>>(

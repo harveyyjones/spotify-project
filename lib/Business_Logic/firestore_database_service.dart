@@ -39,8 +39,8 @@ class FirestoreDatabaseService {
     return okunanUserBilgileriNesne;
   }
 
-  // Başkasının profilini incelerken veri çekmeye yarıyor.
-  Future<UserModel> getUserDataForDetailPage(uid) async {
+  Future<UserModel> getUserDataForDetailPage([uid]) async {
+    // Başkasının profilini incelerken veri çekmeye yarıyor.
     DocumentSnapshot<Map<String, dynamic>> okunanUser =
         await FirebaseFirestore.instance.doc("users/${uid}").get();
     Map<String, dynamic>? okunanUserbilgileriMap = okunanUser.data();
@@ -50,8 +50,8 @@ class FirestoreDatabaseService {
     return okunanUserBilgileriNesne;
   }
 
-  // Mesaj kutusunda konuştuğum insanların ID'lerini alarak kişisel bilgilerini döndüren metod.
   Future<UserModel?> getUserDataForMessageBox(uid) async {
+    // Mesaj kutusunda konuştuğum insanların ID'lerini alarak kişisel bilgilerini döndüren metod.
     DocumentSnapshot<Map<String, dynamic>> okunanUser =
         await FirebaseFirestore.instance.doc("users/${uid}").get();
     Map<String, dynamic>? okunanUserbilgileriMap = await okunanUser.data();
@@ -94,7 +94,7 @@ class FirestoreDatabaseService {
     //   dataList.add(doc.data()["eMail"].toString());
     // });
     // print(dataList);
-    allClinicOwnersList = dataList;
+
     return dataList;
   }
 
@@ -519,5 +519,24 @@ class FirestoreDatabaseService {
     } catch (e) {
       print("Spotify is not active or disconnected: $e");
     }
+  }
+
+  Future<List<UserModel>> getLikedPeople() async {
+    List<UserModel> likedPeople = [];
+    final previousMatchesRef = await _instance
+        .collection("matches")
+        .doc(currentUser!.uid)
+        .collection("quickMatchesList")
+        .where("isLiked", isNotEqualTo: null)
+        .orderBy("timeStamp", descending: false)
+        .get();
+
+    for (var item in previousMatchesRef.docs) {
+      if (true == item["isLiked"]) {
+        UserModel userModel = await getUserDataForDetailPage(item["uid"]);
+        likedPeople.add(userModel);
+      }
+    }
+    return likedPeople;
   }
 }

@@ -35,6 +35,7 @@ class _MyHomePageState extends State<SwipeCardWidgetForQuickMatch> {
 
   @override
   void initState() {
+    widget.snapshotData.shuffle();
     for (var i = 0; i < widget.snapshotData.length; i++) {
       _swipeItems.add(SwipeItem(likeAction: () {
         _firestoreDatabaseService.updateIsLikedAsQuickMatch(
@@ -149,7 +150,7 @@ class _MyHomePageState extends State<SwipeCardWidgetForQuickMatch> {
                 },
                 leftSwipeAllowed: true,
                 rightSwipeAllowed: true,
-                upSwipeAllowed: true,
+                upSwipeAllowed: false,
                 fillSpace: true,
                 likeTag: Container(
                   margin: const EdgeInsets.all(15.0),
