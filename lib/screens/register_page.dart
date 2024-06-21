@@ -37,7 +37,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: const Color(0xfff2f9ff),
@@ -45,61 +46,61 @@ class _RegisterPageState extends State<RegisterPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              color: Colors.black,
-            )),
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: Colors.black,
+          ),
+        ),
       ),
       resizeToAvoidBottomInset: false,
       body: Container(
-          width: screenWidth, height: screenHeight, child: _buildForm(context)),
-    );
-  }
-
-// formun oluşturulması
-  Form _buildForm(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            SizedBox(
-              height: screenHeight / 5,
-            ),
-            Text("Sign Up",
-                style: GoogleFonts.poppins(
-                  fontSize: 30.sp,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black54,
-                )),
-            SizedBox(
-              height: screenHeight / 45,
-            ),
-            // _buildname(),
-            SizedBox(height: screenHeight / 35),
-            _buildEmailField(),
-            SizedBox(height: screenHeight / 35),
-            _buildphoneNumber(),
-            SizedBox(height: screenHeight / 35),
-            _buildPasswordField(),
-            SizedBox(height: screenHeight / 35),
-            _buildRegisterInButton(context),
-          ],
-        ),
+        width: screenWidth,
+        height: screenHeight,
+        child: _buildForm(context, screenWidth, screenHeight),
       ),
     );
   }
 
-//isim kontrolü
-  /* bool isValidName(String name) {
-    return RegExp(r"^[a-z A-Z,.\-]+$").hasMatch(name);
-  }*/
+  // formun oluşturulması
+  Form _buildForm(
+      BuildContext context, double screenWidth, double screenHeight) {
+    return Form(
+      key: formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          SizedBox(
+            height: screenHeight / 5,
+          ),
+          Text(
+            "Sign Up",
+            style: GoogleFonts.poppins(
+              fontSize: 30.sp,
+              fontWeight: FontWeight.w400,
+              color: Colors.black54,
+            ),
+          ),
+          SizedBox(
+            height: screenHeight / 45,
+          ),
+          _buildname(screenWidth),
+          SizedBox(height: screenHeight / 35),
+          _buildEmailField(screenWidth),
+          SizedBox(height: screenHeight / 35),
+          _buildphoneNumber(screenWidth),
+          SizedBox(height: screenHeight / 35),
+          _buildPasswordField(screenWidth),
+          SizedBox(height: screenHeight / 35),
+          _buildRegisterInButton(context, screenWidth),
+        ],
+      ),
+    );
+  }
 
-// isim alanı
-  Widget _buildname() {
+  // isim alanı
+  Widget _buildname(double screenWidth) {
     return Container(
       width: screenWidth / 1.7,
       height: screenWidth / 9,
@@ -140,12 +141,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool isValidEmail(String email) {
     return RegExp(
-            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+[a-zA-Z0-9]+\.[a-zA-Z]+")
-        .hasMatch(email);
+      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+$",
+    ).hasMatch(email);
   }
 
-// e-mail alanı
-  Widget _buildEmailField() {
+  // e-mail alanı
+  Widget _buildEmailField(double screenWidth) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: screenWidth / 7),
       child: TextFormField(
@@ -157,25 +158,30 @@ class _RegisterPageState extends State<RegisterPage> {
             callSnackbar('Email boş olamaz!');
             return '';
           } else if (!isValidEmail(value)) {
-          } else {
             callSnackbar('Email formatı hatalı!');
+            return '';
           }
           return null;
         },
         decoration: InputDecoration(
           errorBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.black, width: 2),
-              borderRadius: BorderRadius.circular(5)),
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(5),
+          ),
           enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.black, width: 2),
-              borderRadius: BorderRadius.circular(5)),
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(5),
+          ),
           focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.black, width: 2),
-              borderRadius: BorderRadius.circular(5)),
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(5),
+          ),
           label: Text(
             "E Mail",
             style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600, color: Colors.black),
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
           ),
           border: const OutlineInputBorder(
             borderSide:
@@ -186,16 +192,15 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-// şifre alanı
-  Widget _buildPasswordField() {
+  // şifre alanı
+  Widget _buildPasswordField(double screenWidth) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: screenWidth / 7),
       child: TextFormField(
         controller: passwordController,
         validator: (value) {
           if (value!.isNotEmpty) {
-            if (value.length > 6) {
-            } else {
+            if (value.length < 6) {
               callSnackbar("Şifreniz minimum 6 haneli olmalıdır.");
               return '';
             }
@@ -207,31 +212,40 @@ class _RegisterPageState extends State<RegisterPage> {
         },
         textInputAction: TextInputAction.next,
         decoration: InputDecoration(
-            errorBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(5)),
-            enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(5)),
-            focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(5)),
-            label: Text(
-              "Password",
-              style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600, color: Colors.black),
+          errorBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          label: Text(
+            "Password",
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
             ),
-            border: const OutlineInputBorder(
-              borderSide:
-                  BorderSide(color: Color.fromARGB(255, 0, 255, 0), width: 2),
+          ),
+          border: const OutlineInputBorder(
+            borderSide:
+                BorderSide(color: Color.fromARGB(255, 0, 255, 0), width: 2),
+          ),
+          suffixIcon: InkWell(
+            onTap: () {
+              setState(() {
+                isVisible = !isVisible;
+              });
+            },
+            child: Icon(
+              isVisible ? Icons.visibility : Icons.visibility_off,
             ),
-            suffixIcon: InkWell(
-                onTap: () {
-                  setState(() {
-                    isVisible = !isVisible;
-                  });
-                },
-                child: const Icon(Icons.visibility))),
+          ),
+        ),
         obscureText: !isVisible,
       ),
     );
@@ -242,8 +256,8 @@ class _RegisterPageState extends State<RegisterPage> {
     return RegExp(r"(^(?:[+0]9)?[0-9]{10,12}$)").hasMatch(phoneNumber);
   }
 
-// numara alanı
-  Widget _buildphoneNumber() {
+  // numara alanı
+  Widget _buildphoneNumber(double screenWidth) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: screenWidth / 7),
       child: TextFormField(
@@ -254,26 +268,31 @@ class _RegisterPageState extends State<RegisterPage> {
             callSnackbar('Telefon numarası boş olamaz!');
             return '';
           } else if (!isValidphoneNumber(value)) {
-          } else {
             callSnackbar('Telefon numarası formatı hatalı!');
+            return '';
           }
           return null;
         },
         textInputAction: TextInputAction.done,
         decoration: InputDecoration(
           errorBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.black, width: 2),
-              borderRadius: BorderRadius.circular(5)),
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(5),
+          ),
           enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.black, width: 2),
-              borderRadius: BorderRadius.circular(5)),
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(5),
+          ),
           focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.black, width: 2),
-              borderRadius: BorderRadius.circular(5)),
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(5),
+          ),
           label: Text(
             "Phone Number",
             style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600, color: Colors.black),
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
           ),
           border: const OutlineInputBorder(
             borderSide:
@@ -284,45 +303,45 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-// kayıt ol butonu
-  _buildRegisterInButton(BuildContext context) {
+  // kayıt ol butonu
+  Widget _buildRegisterInButton(BuildContext context, double screenWidth) {
     FirestoreDatabaseService _firestoreDatabaseService =
         FirestoreDatabaseService();
     return Container(
       width: screenWidth / 2,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.black,
-            backgroundColor: Colors.black,
-            elevation: 5,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-            minimumSize: const Size(double.infinity, 50)),
+          foregroundColor: Colors.black,
+          backgroundColor: Colors.black,
+          elevation: 5,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+          minimumSize: const Size(double.infinity, 50),
+        ),
         onPressed: () async {
-          print(formKey.currentContext!.size!.width);
-
           if (formKey.currentState!.validate()) {
             signUp();
           } else {
             callSnackbar("Something went wrong, please check your informs.");
           }
         },
-        child: Text("Sign Up",
-            style: GoogleFonts.poppins(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w400,
-              color: Colors.white,
-            )),
+        child: Text(
+          "Sign Up",
+          style: GoogleFonts.poppins(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
 
-// uyarı mesajı
+  // uyarı mesajı
   void callSnackbar(String error, [Color? color, VoidCallback? onVisible]) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
-      //padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       backgroundColor: color ?? Colors.red,
       duration: const Duration(milliseconds: 500),
       onVisible: onVisible,
@@ -342,7 +361,6 @@ class _RegisterPageState extends State<RegisterPage> {
   Future signUp() async {
     FirestoreDatabaseService _firestoreDatabaseService =
         FirestoreDatabaseService();
-
     User? user;
     try {
       UserCredential userCredential = await auth.createUserWithEmailAndPassword(
@@ -361,13 +379,10 @@ class _RegisterPageState extends State<RegisterPage> {
         phoneNumber: phoneNumberController.text.toString(),
         photoUrl: "",
         uid: auth.currentUser?.uid,
-        // Bu parametreleri gerekirse doldurabilirsin
       );
 
       user = userCredential.user;
-      print(user);
       await user!.updateDisplayName(nameController.text);
-
       await user.reload();
       user = auth.currentUser;
       Future.delayed(const Duration(seconds: 1));

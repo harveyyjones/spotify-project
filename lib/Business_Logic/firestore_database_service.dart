@@ -413,14 +413,21 @@ class FirestoreDatabaseService {
   getUserDatasToMatch(songName, amIListeningNow, title) async {
     print("Şu method tetiklendi: ${getUserDatasToMatch}");
     // Anlık olarak sürekli olarak o anda eşleşilen kişinin bilgilerini kullanıma hazır tutuyor.
-    QuerySnapshot<Map<String, dynamic>> _okunanUser =
-        await FirebaseFirestore.instance.collection("users").get();
-    for (var item in _okunanUser.docs) {
-      if (songName == item["songName"]) {
-        sendMatchesToDatabase(item["userId"], songName, songName);
-        print(" Eslesilen kisi: ${item["name"]}");
-        print(" Eşleşilen kişinin uid: ${item["userId"]}");
+    try {
+      QuerySnapshot<Map<String, dynamic>> _okunanUser =
+          await FirebaseFirestore.instance.collection("users").get();
+
+      for (var item in _okunanUser.docs) {
+        // Check if the document contains the 'songName' field
+        if (item.data().containsKey('songName') &&
+            songName == item["songName"]) {
+          sendMatchesToDatabase(item["userId"], songName, songName);
+          print("Eşleşilen kişi: ${item["name"]}");
+          print("Eşleşilen kişinin uid: ${item["userId"]}");
+        }
       }
+    } catch (e) {
+      print("Error fetching data: $e");
     }
   }
 
