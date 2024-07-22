@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
+import 'package:spotify_project/business/Spotify_Logic/constants.dart';
 import 'package:spotify_project/main.dart';
 
 import 'package:spotify_sdk/spotify_sdk.dart';
@@ -50,8 +51,13 @@ class BusinessLogic {
           scope: 'app-remote-control, '
               'user-modify-playback-state, '
               'playlist-read-private, '
+              'user-library-read, '
               'playlist-modify-public,user-read-currently-playing');
       setStatus('Got a token: $authenticationToken');
+      accesToken = authenticationToken;
+      print(
+          "**************************** AUTHENTICATION TOKEN: ${accesToken}  **************************************");
+
       return authenticationToken;
     } on PlatformException catch (e) {
       setStatus(e.code, message: e.message);

@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
+import 'package:spotify_project/business/Spotify_Logic/fetch_tracks.dart';
 import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
 import 'package:spotify_project/screens/matches_screen.dart' as prefix;
@@ -30,7 +31,7 @@ String clientId = "b56ad9c2cf434b748466bb6adbb511ca";
 String redirectURL = "https://www.rubycurehealthtourism.com/";
 late ImageUri? currentTrackImageUri;
 bool _loading = false;
-late bool connected;
+bool connected = false;
 BusinessLogic _businessLogic = BusinessLogic();
 
 void main() async {
@@ -43,14 +44,7 @@ void main() async {
           projectId: "musee-285eb",
           storageBucket: "gs://musee-285eb.appspot.com"));
 
-  try {
-    await SpotifySdk.connectToSpotifyRemote(
-      clientId: clientId,
-      redirectUrl: redirectURL,
-    ).then((value) => runApp(const MyApp()));
-  } catch (e) {
-    print("Spotify girişe izin vermedi.");
-  }
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -73,7 +67,7 @@ class MyApp extends StatelessWidget {
                   "************************************************************");
               print("Şu anda bir oturum açık.");
 
-              return const Home();
+              return Home();
             } else {
               return LandingPage();
             }
@@ -111,22 +105,27 @@ class _HomeState extends State<Home> {
   );
 
   @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-    connected = false;
+  void initState() {
+    if (connected == true) {
+      return;
+    } else {
+      handleAuthAndTokenForSpotify();
+    }
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     // TODO: Use the below part in comment during debugging thus it prevents the hot restart.
-    handleAuthAndTokenForSpotify();
+    // handleAuthAndTokenForSpotify();
+    // _businessLogic.connectToSpotifyRemote();
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<ConnectionStatus>(
         stream: SpotifySdk.subscribeConnectionStatus(),
         builder: (context, snapshot) {
-          connected = false;
+          //  connected  = false;
           var data = snapshot.data;
           if (data != null) {
             connected = data.connected;
@@ -158,6 +157,7 @@ class _EverythingState extends State<Everything> {
 
   @override
   void initState() {
+    // fetchTracks();
     super.initState();
     _updateActiveStatus();
   }
@@ -166,12 +166,12 @@ class _EverythingState extends State<Everything> {
   void dispose() {
     // TODO: implement dispose
     super.dispose();
-    _startTimer();
-    _updateActiveStatus();
+    // _startTimer();
+    // _updateActiveStatus();
   }
 
   void _startTimer({name}) {
-    _timer = Timer.periodic(const Duration(seconds: 20), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _updateActiveStatus(name: name);
     });
   }
@@ -192,6 +192,8 @@ class _EverythingState extends State<Everything> {
         print("*****************************************************");
         print(isActive);
         print(event.track?.name ?? "");
+        print(event.track!.imageUri.raw);
+        print(event.track!.linkedFromUri);
 
         _service.updateIsUserListening(isActive, event.track!.name);
 
@@ -257,6 +259,9 @@ class _EverythingState extends State<Everything> {
                 ),
               ),
             ),
+            // *************************** FETCH TRACKS *********************************
+            ElevatedButton(
+                onPressed: () => fetchTracks(), child: Text("Fetch playlist")),
             widget.connected
                 ? StreamBuilder<PlayerState>(
                     stream: SpotifySdk.subscribePlayerState(),
@@ -265,6 +270,13 @@ class _EverythingState extends State<Everything> {
                       var track = snapshot.data?.track;
                       currentTrackImageUri = track?.imageUri;
                       var playerState = snapshot.data;
+
+                      print(
+                          "URL of the Image of the current track: ${playerState?.track?.linkedFromUri.toString()}");
+
+                      print(
+                          "URL of the Image of the current track: ${playerState?.track?.imageUri.toString()}");
+
                       _startTimer();
 
                       if (playerState == null || track == null) {

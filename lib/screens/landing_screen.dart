@@ -3,8 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spotify_project/business/business_logic.dart';
+import 'package:spotify_project/main.dart';
 import 'package:spotify_project/screens/login_page.dart';
 import 'package:spotify_project/screens/register_page.dart';
+import 'package:spotify_project/screens/steppers.dart';
+import 'package:spotify_sdk/spotify_sdk.dart';
 
 class LandingPage extends StatefulWidget {
   LandingPage({Key? key}) : super(key: key);
@@ -57,12 +61,11 @@ class _LandingPageState extends State<LandingPage> {
             SizedBox(
               height: screenHeight / 4,
             ),
-            GeneralButton(
-                "Login", LoginPage(), Color.fromARGB(255, 28, 141, 60)),
+            GeneralButton("Connect to spotify", LoginPage(),
+                Color.fromARGB(255, 28, 141, 60)),
             SizedBox(
               height: screenHeight / 15,
             ),
-            GeneralButton("Register", RegisterPage(), Colors.black),
           ],
         ),
       ),
@@ -71,6 +74,7 @@ class _LandingPageState extends State<LandingPage> {
 }
 
 class GeneralButton extends StatelessWidget {
+  BusinessLogic _businessLogic = BusinessLogic();
   GeneralButton(this.text, this.route, this.color);
   Color? color;
   String? text;
@@ -80,16 +84,28 @@ class GeneralButton extends StatelessWidget {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
     return InkWell(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => route,
-      )),
+      onTap: () async {
+        try {
+          await _businessLogic.getAccessToken(clientId, redirectURL).then(
+              (value) => _businessLogic.connectToSpotifyRemote().then((value) {
+                    connected = true;
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) {
+                        return SteppersForClients();
+                      },
+                    ));
+                  }));
+        } catch (e) {
+          print("Spotify girişe izin vermedi.");
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
             color: color ?? Colors.black,
             borderRadius: const BorderRadius.all(
               Radius.circular(30),
             )),
-        width: screenWidth / 2.5,
+        width: screenWidth / 2,
         height: screenHeight / 12,
         child: Center(
           child: Text(text.toString(),
