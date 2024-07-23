@@ -33,9 +33,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
     super.dispose();
 
     firestoreDatabaseService.getUserDatasToMatch(
-        firestoreDatabaseService.returnCurrentlyListeningMusicName(),
-        SpotifySdk.isSpotifyAppActive,
-        firestoreDatabaseService.returnCurrentlyListeningMusicName());
+      firestoreDatabaseService.returnCurrentlyListeningMusicName(),
+      SpotifySdk.isSpotifyAppActive,
+    );
   }
 
   @override
@@ -47,7 +47,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
     await firestoreDatabaseService.getUserDatasToMatch(
       firestoreDatabaseService.returnCurrentlyListeningMusicName(),
       SpotifySdk.isSpotifyAppActive,
-      firestoreDatabaseService.returnCurrentlyListeningMusicName(),
     );
   }
 

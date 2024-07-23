@@ -410,7 +410,7 @@ class FirestoreDatabaseService {
         .update({"isUserListening": state, "songName": url});
   }
 
-  getUserDatasToMatch(songName, amIListeningNow, title) async {
+  getUserDatasToMatch(songName, amIListeningNow) async {
     print("Şu method tetiklendi: ${getUserDatasToMatch}");
     // Anlık olarak sürekli olarak o anda eşleşilen kişinin bilgilerini kullanıma hazır tutuyor.
     try {

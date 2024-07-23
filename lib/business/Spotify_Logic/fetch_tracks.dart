@@ -5,6 +5,7 @@ import 'package:spotify_project/business/Spotify_Logic/constants.dart';
 void fetchTracks() async {
   // Replace with your actual Spotify access token
   String accessToken = accesToken.toString();
+
   print("Show fetched tracks method called: $accessToken");
 
   final spotifyService = SpotifyService(accessToken);

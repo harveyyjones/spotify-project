@@ -39,7 +39,6 @@ class _QuickMatchesScreenState extends State<QuickMatchesScreen> {
     await firestoreDatabaseService.getUserDatasToMatch(
       firestoreDatabaseService.returnCurrentlyListeningMusicName(),
       SpotifySdk.isSpotifyAppActive,
-      firestoreDatabaseService.returnCurrentlyListeningMusicName(),
     );
   }
 

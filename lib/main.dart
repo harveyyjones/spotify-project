@@ -151,7 +151,7 @@ class Everything extends StatefulWidget {
 }
 
 class _EverythingState extends State<Everything> {
-  late bool isActive; // isActive değişkeni tanımlandı
+  // late bool isActive; // isActive değişkeni tanımlandı
   late StreamSubscription<bool> _subscription;
   late Timer _timer;
 
@@ -159,20 +159,12 @@ class _EverythingState extends State<Everything> {
   void initState() {
     // fetchTracks();
     super.initState();
-    _updateActiveStatus();
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-    // _startTimer();
     // _updateActiveStatus();
   }
 
   void _startTimer({name}) {
     _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      _updateActiveStatus(name: name);
+      _updateActiveStatus(snapshot: name);
     });
   }
 
@@ -182,24 +174,24 @@ class _EverythingState extends State<Everything> {
     });
   }
 
-  void _updateActiveStatus({name}) async {
+  void _updateActiveStatus(
+      {required AsyncSnapshot<PlayerState> snapshot}) async {
     try {
+      bool isActive = false;
       isActive = await SpotifySdk.isSpotifyAppActive;
 
-      var _name = SpotifySdk.subscribePlayerState();
+      print(
+          "********************   _updateActiveStatusMethod triggered. *********************************");
+      print(isActive);
+      print(snapshot.data!.track!.artist.name ?? "");
+      print(snapshot.data!.track!.name);
 
-      _name.listen((event) async {
-        print("*****************************************************");
-        print(isActive);
-        print(event.track?.name ?? "");
-        print(event.track!.imageUri.raw);
-        print(event.track!.linkedFromUri);
+      _service.updateIsUserListening(isActive, snapshot.data!.track!.name);
 
-        _service.updateIsUserListening(isActive, event.track!.name);
-
-        firestoreDatabaseService.getUserDatasToMatch(
-            event.track?.name, isActive, event.track?.name);
-      });
+      firestoreDatabaseService.getUserDatasToMatch(
+        snapshot.data!.track!.name,
+        isActive,
+      );
     } catch (e) {
       print("Spotify is not active or disconnected: $e");
     }
@@ -277,14 +269,16 @@ class _EverythingState extends State<Everything> {
                       print(
                           "URL of the Image of the current track: ${playerState?.track?.imageUri.toString()}");
 
-                      _startTimer();
+                      // _startTimer();
 
-                      if (playerState == null || track == null) {
-                        return Center(
-                          child: Container(color: Colors.purple),
-                        );
-                      } else {
-//TODO: Aşağıya bir şekilde stream entegre et.
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+
+                      if (snapshot.hasData) {
+                        // TODO: Aşağıda eşleşme algoritmasını daha az işlemci kullanacak mı diye test ediyorum. Stabil çalışmazsa eski startTimer() metoduna geçeçceğiz.
+                        _updateActiveStatus(snapshot: snapshot);
+                        //TODO: Aşağıya bir şekilde stream entegre et.
                         return Column(
                           children: <Widget>[
                             SizedBox(
@@ -292,7 +286,7 @@ class _EverythingState extends State<Everything> {
                             ),
                             FutureBuilder(
                               future: SpotifySdk.getImage(
-                                imageUri: track.imageUri,
+                                imageUri: track!.imageUri,
                                 dimension: ImageDimension.large,
                               ),
                               builder: (BuildContext context,
@@ -312,11 +306,13 @@ class _EverythingState extends State<Everything> {
                               },
                             ),
                             Text(
-                              '${track.artist.name} - ${track.name} ',
+                              '${snapshot.data!.track!.artist.name} - ${snapshot.data!.track!.name} ',
                               style: const TextStyle(fontSize: 22),
                             ),
                           ],
                         );
+                      } else {
+                        return Center(child: CircularProgressIndicator());
                       }
                     },
                   )
