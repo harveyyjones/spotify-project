@@ -174,24 +174,25 @@ class _EverythingState extends State<Everything> {
     });
   }
 
-  void _updateActiveStatus(
-      {required AsyncSnapshot<PlayerState> snapshot}) async {
+//***************************************** UPDATE ACTIVE STATUS AND START MATCHING ALGORITHM ************************************
+  void _updateActiveStatus({snapshot}) async {
     try {
-      bool isActive = false;
-      isActive = await SpotifySdk.isSpotifyAppActive;
+      var isActive = await SpotifySdk.isSpotifyAppActive;
 
-      print(
-          "********************   _updateActiveStatusMethod triggered. *********************************");
-      print(isActive);
-      print(snapshot.data!.track!.artist.name ?? "");
-      print(snapshot.data!.track!.name);
+      var _name = SpotifySdk.subscribePlayerState();
 
-      _service.updateIsUserListening(isActive, snapshot.data!.track!.name);
+      _name.listen((event) async {
+        print("*****************************************************");
+        print(isActive);
+        print(event.track?.name ?? "");
+        print(event.track!.imageUri.raw);
+        print(event.track!.linkedFromUri);
 
-      firestoreDatabaseService.getUserDatasToMatch(
-        snapshot.data!.track!.name,
-        isActive,
-      );
+        _service.updateIsUserListening(isActive, event.track!.name);
+
+        firestoreDatabaseService.getUserDatasToMatch(
+            event.track?.name, isActive);
+      });
     } catch (e) {
       print("Spotify is not active or disconnected: $e");
     }
@@ -259,6 +260,8 @@ class _EverythingState extends State<Everything> {
                     stream: SpotifySdk.subscribePlayerState(),
                     builder: (BuildContext context,
                         AsyncSnapshot<PlayerState> snapshot) {
+                      // TODO: Aşağıda eşleşme algoritmasını daha az işlemci kullanacak mı diye test ediyorum. Stabil çalışmazsa eski startTimer() metoduna geçeçceğiz.
+                      _updateActiveStatus(snapshot: snapshot);
                       var track = snapshot.data?.track;
                       currentTrackImageUri = track?.imageUri;
                       var playerState = snapshot.data;
@@ -276,8 +279,6 @@ class _EverythingState extends State<Everything> {
                       }
 
                       if (snapshot.hasData) {
-                        // TODO: Aşağıda eşleşme algoritmasını daha az işlemci kullanacak mı diye test ediyorum. Stabil çalışmazsa eski startTimer() metoduna geçeçceğiz.
-                        _updateActiveStatus(snapshot: snapshot);
                         //TODO: Aşağıya bir şekilde stream entegre et.
                         return Column(
                           children: <Widget>[
