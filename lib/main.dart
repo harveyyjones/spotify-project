@@ -9,7 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
-import 'package:spotify_project/business/Spotify_Logic/fetch_tracks.dart';
+import 'package:spotify_project/business/Spotify_Logic/services/fetch_artists.dart';
 import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
 import 'package:spotify_project/screens/matches_screen.dart' as prefix;
@@ -159,12 +159,17 @@ class _EverythingState extends State<Everything> {
   void initState() {
     // fetchTracks();
     super.initState();
-    // _updateActiveStatus();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
   }
 
   void _startTimer({name}) {
     _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      _updateActiveStatus(snapshot: name);
+      firestoreDatabaseService.updateActiveStatus(snapshot: name);
     });
   }
 
@@ -175,28 +180,28 @@ class _EverythingState extends State<Everything> {
   }
 
 //***************************************** UPDATE ACTIVE STATUS AND START MATCHING ALGORITHM ************************************
-  void _updateActiveStatus({snapshot}) async {
-    try {
-      var isActive = await SpotifySdk.isSpotifyAppActive;
+  // void _updateActiveStatus({snapshot}) async {
+  //   try {
+  //     var isActive = await SpotifySdk.isSpotifyAppActive;
 
-      var _name = SpotifySdk.subscribePlayerState();
+  //     var _name = SpotifySdk.subscribePlayerState();
 
-      _name.listen((event) async {
-        print("*****************************************************");
-        print(isActive);
-        print(event.track?.name ?? "");
-        print(event.track!.imageUri.raw);
-        print(event.track!.linkedFromUri);
+  //     _name.listen((event) async {
+  //       print("*****************************************************");
+  //       print(isActive);
+  //       print(event.track?.name ?? "");
+  //       print(event.track!.imageUri.raw);
+  //       print(event.track!.linkedFromUri);
 
-        _service.updateIsUserListening(isActive, event.track!.name);
+  //       _service.updateIsUserListening(isActive, event.track!.name);
 
-        firestoreDatabaseService.getUserDatasToMatch(
-            event.track?.name, isActive);
-      });
-    } catch (e) {
-      print("Spotify is not active or disconnected: $e");
-    }
-  }
+  //       firestoreDatabaseService.getUserDatasToMatch(
+  //           event.track?.name, isActive);
+  //     });
+  //   } catch (e) {
+  //     print("Spotify is not active or disconnected: $e");
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -252,19 +257,20 @@ class _EverythingState extends State<Everything> {
                 ),
               ),
             ),
-            // *************************** FETCH TRACKS *********************************
-            ElevatedButton(
-                onPressed: () => fetchTracks(), child: Text("Fetch playlist")),
+            // *************************** FETCH TRACK DATAS ****************************************************
+            ElevatedButton(onPressed: () {}, child: Text("Fetch playlist")),
             widget.connected
+                // ***************************** SHOW THE NAME AND IMAGE OF THE SONG WITH THE PLAYER STATE **************************
                 ? StreamBuilder<PlayerState>(
                     stream: SpotifySdk.subscribePlayerState(),
                     builder: (BuildContext context,
                         AsyncSnapshot<PlayerState> snapshot) {
                       // TODO: Aşağıda eşleşme algoritmasını daha az işlemci kullanacak mı diye test ediyorum. Stabil çalışmazsa eski startTimer() metoduna geçeçceğiz.
-                      _updateActiveStatus(snapshot: snapshot);
+
                       var track = snapshot.data?.track;
                       currentTrackImageUri = track?.imageUri;
                       var playerState = snapshot.data;
+                      firestoreDatabaseService.updateActiveStatus();
 
                       print(
                           "URL of the Image of the current track: ${playerState?.track?.linkedFromUri.toString()}");
@@ -285,27 +291,27 @@ class _EverythingState extends State<Everything> {
                             SizedBox(
                               height: screenHeight / 600,
                             ),
-                            FutureBuilder(
-                              future: SpotifySdk.getImage(
-                                imageUri: track!.imageUri,
-                                dimension: ImageDimension.large,
-                              ),
-                              builder: (BuildContext context,
-                                  AsyncSnapshot<Uint8List?> snapshot) {
-                                if (snapshot.hasData) {
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                        top:
-                                            MediaQuery.of(context).size.height /
-                                                11),
-                                    child: Image.memory(snapshot.data!),
-                                  );
-                                } else {
-                                  return const Center(
-                                      child: CircularProgressIndicator());
-                                }
-                              },
-                            ),
+                            // FutureBuilder(
+                            //   future: SpotifySdk.getImage(
+                            //     imageUri: track!.imageUri,
+                            //     dimension: ImageDimension.large,
+                            //   ),
+                            //   builder: (BuildContext context,
+                            //       AsyncSnapshot<Uint8List?> snapshot) {
+                            //     if (snapshot.hasData) {
+                            //       return Padding(
+                            //         padding: EdgeInsets.only(
+                            //             top:
+                            //                 MediaQuery.of(context).size.height /
+                            //                     11),
+                            //         child: Image.memory(snapshot.data!),
+                            //       );
+                            //     } else {
+                            //       return const Center(
+                            //           child: CircularProgressIndicator());
+                            //     }
+                            //   },
+                            // ),
                             Text(
                               '${snapshot.data!.track!.artist.name} - ${snapshot.data!.track!.name} ',
                               style: const TextStyle(fontSize: 22),

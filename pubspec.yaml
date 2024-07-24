@@ -54,6 +54,8 @@ dependencies:
   swipe_cards: ^2.0.0+1
   flutter_launcher_icons: ^0.13.1
   http: ^1.2.2
+  flutter_riverpod: ^2.5.1
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

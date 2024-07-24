@@ -15,8 +15,11 @@ import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/screens/sharePostScreen.dart';
 import 'package:spotify_project/screens/steppers.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
-
 import 'Models/user_model.dart';
+
+import 'package:spotify_sdk/spotify_sdk.dart';
+import 'package:spotify_sdk/models/player_state.dart';
+import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 
 List allClinicOwnersList = [];
 
@@ -556,5 +559,28 @@ class FirestoreDatabaseService {
       }
     }
     return likedPeople;
+  }
+
+  void updateActiveStatus({snapshot}) async {
+    try {
+      var isActive = await SpotifySdk.isSpotifyAppActive;
+
+      var _name = SpotifySdk.subscribePlayerState();
+      if (isActive) {
+        _name.listen((event) async {
+          print("*****************************************************");
+          print(isActive);
+          print(event.track?.name ?? "");
+          print(event.track!.imageUri.raw);
+          print(event.track!.linkedFromUri);
+
+          updateIsUserListening(isActive, event.track!.name);
+
+          getUserDatasToMatch(event.track?.name, isActive);
+        });
+      }
+    } catch (e) {
+      print("Spotify is not active or disconnected: $e");
+    }
   }
 }

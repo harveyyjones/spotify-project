@@ -4,11 +4,16 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
+import 'package:spotify_project/main.dart';
 import 'package:spotify_project/screens/chat_screen.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_project/widgets/swipe_card.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 import 'package:swipe_cards/swipe_cards.dart';
+import 'package:spotify_sdk/models/connection_status.dart';
+import 'package:spotify_sdk/models/image_uri.dart';
+import 'package:spotify_sdk/models/player_state.dart';
+import 'package:spotify_sdk/spotify_sdk.dart';
 
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({super.key});
@@ -23,7 +28,6 @@ class _MatchesScreenState extends State<MatchesScreen> {
   @override
   void initState() {
     super.initState();
-
     print("initstate metodu tetiklendi.");
   }
 
@@ -110,64 +114,109 @@ class _CardsFornyificationsState extends State<CardsForNotifications> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _firestoreDatabaseService.getTheMutualSongViaUId(widget.userId),
-      builder: (context, AsyncSnapshot snapshot) {
-        if (snapshot.hasData) {
-          return InkWell(
-            onTap: () => Navigator.of(context, rootNavigator: false)
-                .push(MaterialPageRoute(
-              builder: (context) => ChatScreen(
-                  widget.userId, widget.profilePhotoUrl, widget.name),
-            )),
-            child: Container(
-              decoration: BoxDecoration(boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade400,
-                  offset: Offset(1, 2),
-                  blurRadius: 1,
-                  blurStyle: BlurStyle.outer,
-                ),
-              ], borderRadius: BorderRadius.circular(22), color: Colors.white),
-              width: screenWidth / 1.1,
-              height: screenHeight / 7,
-              child: Row(
-                children: [
+    return Column(
+      children: [
+        StreamBuilder<PlayerState>(
+          stream: SpotifySdk.subscribePlayerState(),
+          builder: (BuildContext context, AsyncSnapshot<PlayerState> snapshot) {
+            // TODO: Aşağıda eşleşme algoritmasını daha az işlemci kullanacak mı diye test ediyorum. Stabil çalışmazsa eski startTimer() metoduna geçeçceğiz.
+
+            var track = snapshot.data?.track;
+            currentTrackImageUri = track?.imageUri;
+            var playerState = snapshot.data;
+
+            firestoreDatabaseService.updateActiveStatus();
+            print(
+                "URL of the Image of the current track: ${playerState?.track?.linkedFromUri.toString()}");
+
+            print(
+                "URL of the Image of the current track: ${playerState?.track?.imageUri.toString()}");
+
+            // _startTimer();
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasData) {
+              //TODO: Aşağıya bir şekilde stream entegre et.
+              return Column(
+                children: <Widget>[
                   SizedBox(
-                    width: screenWidth / 33,
+                    height: screenHeight / 600,
                   ),
-                  CircleAvatar(
-                      maxRadius: screenWidth / 11,
-                      minRadius: 20,
-                      backgroundImage: NetworkImage(widget.profilePhotoUrl)),
-                  SizedBox(
-                    width: screenWidth / 32,
-                  ),
-                  Column(
+                ],
+              );
+            } else {
+              return Center(child: CircularProgressIndicator());
+            }
+          },
+        ),
+        FutureBuilder(
+          future:
+              _firestoreDatabaseService.getTheMutualSongViaUId(widget.userId),
+          builder: (context, AsyncSnapshot snapshot) {
+            if (snapshot.hasData) {
+              return InkWell(
+                onTap: () => Navigator.of(context, rootNavigator: false)
+                    .push(MaterialPageRoute(
+                  builder: (context) => ChatScreen(
+                      widget.userId, widget.profilePhotoUrl, widget.name),
+                )),
+                child: Container(
+                  decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.shade400,
+                          offset: Offset(1, 2),
+                          blurRadius: 1,
+                          blurStyle: BlurStyle.outer,
+                        ),
+                      ],
+                      borderRadius: BorderRadius.circular(22),
+                      color: Colors.white),
+                  width: screenWidth / 1.1,
+                  height: screenHeight / 7,
+                  child: Row(
                     children: [
                       SizedBox(
-                        height: screenHeight / 55,
+                        width: screenWidth / 33,
                       ),
-                      Container(
-                        width: screenWidth / 1.6,
-                        height: screenHeight / 10,
-                        color: Colors.white,
-                        child: Text(
-                          softWrap: true,
-                          "You've listened \"${snapshot.data!.toString()} with ${widget.name} at the same time.",
-                          style: TextStyle(fontSize: 33.sp, height: 1.2),
-                        ),
+                      CircleAvatar(
+                          maxRadius: screenWidth / 11,
+                          minRadius: 20,
+                          backgroundImage:
+                              NetworkImage(widget.profilePhotoUrl)),
+                      SizedBox(
+                        width: screenWidth / 32,
+                      ),
+                      Column(
+                        children: [
+                          SizedBox(
+                            height: screenHeight / 55,
+                          ),
+                          Container(
+                            width: screenWidth / 1.6,
+                            height: screenHeight / 10,
+                            color: Colors.white,
+                            child: Text(
+                              softWrap: true,
+                              "You've listened \"${snapshot.data!.toString()} with ${widget.name} at the same time.",
+                              style: TextStyle(fontSize: 33.sp, height: 1.2),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          );
-        } else {
-          return SizedBox();
-        }
-      },
+                ),
+              );
+            } else {
+              return SizedBox();
+            }
+          },
+        ),
+      ],
     );
   }
 }

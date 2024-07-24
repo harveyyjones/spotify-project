@@ -52,11 +52,12 @@ class BusinessLogic {
               'user-modify-playback-state, '
               'playlist-read-private, '
               'user-library-read, '
-              'playlist-modify-public,user-read-currently-playing');
+              'playlist-modify-public,user-read-currently-playing, '
+              'user-top-read');
       setStatus('Got a token: $authenticationToken');
-      accesToken = authenticationToken;
+      accessToken = authenticationToken;
       print(
-          "**************************** AUTHENTICATION TOKEN: ${accesToken}  **************************************");
+          "**************************** AUTHENTICATION TOKEN: ${accessToken}  **************************************");
 
       return authenticationToken;
     } on PlatformException catch (e) {

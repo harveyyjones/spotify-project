@@ -5,9 +5,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
+import 'package:spotify_project/business/Spotify_Logic/Models/top_10_track_model.dart';
+// import 'package:spotify_project/business/Spotify_Logic/Models/top_artists_of_the_user.dart';
+import 'package:spotify_project/business/Spotify_Logic/constants.dart';
+import 'package:spotify_project/business/Spotify_Logic/services/fetch_artists.dart';
+import 'package:spotify_project/business/Spotify_Logic/services/fetch_top_10_tracks_of_the_user.dart';
 import 'package:spotify_project/screens/profile_settings.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
+import 'package:spotify_sdk/spotify_sdk.dart';
 
 class OwnProfileScreenForClients extends StatefulWidget {
   OwnProfileScreenForClients({Key? key}) : super(key: key);
@@ -19,10 +25,18 @@ class OwnProfileScreenForClients extends StatefulWidget {
 
 class _OwnProfileScreenForClientsState
     extends State<OwnProfileScreenForClients> {
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
+  final FirestoreDatabaseService _serviceForSnapshot =
+      FirestoreDatabaseService();
+  late Future<SpotifyArtistsResponse> _futureArtists;
+  late Future<List<SpotifyTrack>> _futureTracks;
 
-  String get text => "Message";
-  FirestoreDatabaseService _serviceForSnapshot = FirestoreDatabaseService();
+  @override
+  void initState() {
+    super.initState();
+    _futureArtists = SpotifyServiceForTopArtists(accessToken).fetchArtists();
+    _futureTracks = SpotifyService(accessToken).fetchTracks();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +45,6 @@ class _OwnProfileScreenForClientsState
         builder: (context, snapshot) => snapshot.hasData
             ? Scaffold(
                 floatingActionButton: FloatingActionButton(
-                  // backgroundColor: Colors.transparent,
                   elevation: 0,
                   child: Icon(Icons.plus_one),
                   onPressed: () async {
@@ -54,8 +67,6 @@ class _OwnProfileScreenForClientsState
                             if (snapshot.hasData) {
                               return Container(
                                 width: screenWidth,
-
-                                // color: Color(0xffecfeff),
                                 child: Column(
                                   children: [
                                     SizedBox(
@@ -64,7 +75,6 @@ class _OwnProfileScreenForClientsState
                                     Stack(
                                       children: [
                                         Container(
-                                          //  color: Colors.amber,
                                           height: screenHeight / 2.6,
                                         ),
                                         Positioned(
@@ -113,7 +123,6 @@ class _OwnProfileScreenForClientsState
                                     SizedBox(
                                       height: screenHeight / 3330,
                                     ),
-                                    // ******************** isim ***********************
                                     Text(
                                         snapshot.data!.name ??
                                             currentUser!.displayName!,
@@ -125,7 +134,6 @@ class _OwnProfileScreenForClientsState
                                     SizedBox(
                                       height: screenHeight / 55,
                                     ),
-                                    // ********** BİYOGRAFİ *********
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 55),
@@ -157,7 +165,6 @@ class _OwnProfileScreenForClientsState
                                             padding: EdgeInsets.only(
                                                 right: screenWidth / 77,
                                                 top: screenHeight / 30),
-                                            //*********** Klinik İsmi *********************
                                             child: Text(
                                               snapshot.data!.clinicName ??
                                                   "mango hosp",
@@ -191,7 +198,6 @@ class _OwnProfileScreenForClientsState
                                           child: Container(
                                             padding: EdgeInsets.only(
                                                 right: screenWidth / 77),
-                                            //   ****************** Unvan ************
                                             child: Text(
                                               snapshot.data!.majorInfo ?? "",
                                               softWrap: true,
@@ -205,7 +211,6 @@ class _OwnProfileScreenForClientsState
                                         ),
                                       ],
                                     ),
-
                                     Row(
                                       children: [
                                         SizedBox(
@@ -215,7 +220,6 @@ class _OwnProfileScreenForClientsState
                                           child: Container(
                                             padding: EdgeInsets.only(
                                                 right: screenWidth / 77),
-                                            //   color: Colors.black,
                                             child: Text(
                                               snapshot.data!.clinicLocation ??
                                                   "Turkey",
@@ -241,7 +245,7 @@ class _OwnProfileScreenForClientsState
                               return CircularProgressIndicator();
                             }
                           }),
-                      // ******************** Postlar burada başlıyor. **********************
+                      // ******************** Posts Section **********************
                       StreamBuilder(
                           stream: _serviceForSnapshot.getAllSharedPosts(),
                           builder: (context, snapshot) {
@@ -249,7 +253,6 @@ class _OwnProfileScreenForClientsState
                               QuerySnapshot querySnapshot =
                                   snapshot.data as QuerySnapshot;
                               return Container(
-                                // color: Colors.amber,
                                 width: screenWidth / 1.4,
                                 height: querySnapshot.docs.length * 760,
                                 child: ListView.builder(
@@ -262,7 +265,6 @@ class _OwnProfileScreenForClientsState
                                       children: [
                                         Container(
                                           width: screenWidth / 1,
-                                          // color: Colors.red,
                                           child: ClipRRect(
                                             borderRadius:
                                                 const BorderRadius.only(
@@ -280,7 +282,6 @@ class _OwnProfileScreenForClientsState
                                         ),
                                         Container(
                                           width: double.infinity,
-                                          // color: Colors.red,
                                           height: screenHeight / 8,
                                           decoration: const BoxDecoration(
                                               color: Color.fromARGB(
@@ -290,7 +291,6 @@ class _OwnProfileScreenForClientsState
                                                       Radius.circular(16),
                                                   bottomRight:
                                                       Radius.circular(16))),
-
                                           child: Padding(
                                             padding: EdgeInsets.all(30),
                                             child: Center(
@@ -313,7 +313,91 @@ class _OwnProfileScreenForClientsState
                             } else {
                               return CircularProgressIndicator();
                             }
-                          })
+                          }),
+                      FutureBuilder<SpotifyArtistsResponse>(
+                        future: _futureArtists,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Error: ${snapshot.error}'));
+                          } else if (snapshot.hasData) {
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount: snapshot.data!.items.length,
+                              itemBuilder: (context, index) {
+                                final artist = snapshot.data!.items[index];
+                                return ListTile(
+                                  leading: Image.network(
+                                    artist.images.isNotEmpty
+                                        ? artist.images[0].url
+                                        : '',
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  title: Text(artist.name),
+                                  subtitle:
+                                      Text('Popularity: ${artist.popularity}'),
+                                  onTap: () {
+                                    // Handle artist item tap if needed
+                                  },
+                                );
+                              },
+                            );
+                          } else {
+                            return Center(child: Text('No data available'));
+                          }
+                        },
+                      ),
+                      Divider(
+                        thickness: 2,
+                        color: Colors.black,
+                      ),
+                      // ******************** Top Tracks Section **********************
+                      FutureBuilder<List<SpotifyTrack>>(
+                        future: _futureTracks,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Error: ${snapshot.error}'));
+                          } else if (snapshot.hasData) {
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount: snapshot.data!.length,
+                              itemBuilder: (context, index) {
+                                final track = snapshot.data![index];
+                                return ListTile(
+                                  leading: Image.network(
+                                    track.album.images.isNotEmpty
+                                        ? track.album.images[0].url
+                                        : '',
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  title: Text(track.name),
+                                  subtitle: Text(track.artists
+                                      .map((artist) => artist.name)
+                                      .join(', ')),
+                                  onTap: () {
+                                    // TODO: Apply URL Launcher to play the song.
+                                  },
+                                );
+                              },
+                            );
+                          } else {
+                            return Center(child: Text('No data available'));
+                          }
+                        },
+                      ),
                     ],
                   ),
                 ),
