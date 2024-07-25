@@ -2,17 +2,17 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
-import 'package:spotify_project/business/Spotify_Logic/services/fetch_artists.dart';
+import 'package:spotify_project/business/Spotify_Logic/constants.dart';
+import 'package:spotify_project/business/Spotify_Logic/Models/top_playlists.dart';
+import 'package:spotify_project/business/Spotify_Logic/services/fetch_playlists.dart';
 import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
-import 'package:spotify_project/screens/matches_screen.dart' as prefix;
 import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/image_uri.dart';
@@ -116,16 +116,11 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Use the below part in comment during debugging thus it prevents the hot restart.
-    // handleAuthAndTokenForSpotify();
-    // _businessLogic.connectToSpotifyRemote();
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<ConnectionStatus>(
         stream: SpotifySdk.subscribeConnectionStatus(),
         builder: (context, snapshot) {
-          //  connected  = false;
           var data = snapshot.data;
           if (data != null) {
             connected = data.connected;
@@ -151,19 +146,26 @@ class Everything extends StatefulWidget {
 }
 
 class _EverythingState extends State<Everything> {
-  // late bool isActive; // isActive değişkeni tanımlandı
   late StreamSubscription<bool> _subscription;
   late Timer _timer;
 
+  bool _loading = false;
+  late Future<List<Playlist>> futurePlaylists;
+
   @override
+  Future<List<Playlist>> fetchPlaylists() async {
+    SpotifyServiceForPlaylists spotifyService = SpotifyServiceForPlaylists(
+        accessToken); // Replace with your actual token
+    return await spotifyService.fetchPlaylists();
+  }
+
   void initState() {
-    // fetchTracks();
     super.initState();
+    futurePlaylists = fetchPlaylists();
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
   }
 
@@ -179,33 +181,8 @@ class _EverythingState extends State<Everything> {
     });
   }
 
-//***************************************** UPDATE ACTIVE STATUS AND START MATCHING ALGORITHM ************************************
-  // void _updateActiveStatus({snapshot}) async {
-  //   try {
-  //     var isActive = await SpotifySdk.isSpotifyAppActive;
-
-  //     var _name = SpotifySdk.subscribePlayerState();
-
-  //     _name.listen((event) async {
-  //       print("*****************************************************");
-  //       print(isActive);
-  //       print(event.track?.name ?? "");
-  //       print(event.track!.imageUri.raw);
-  //       print(event.track!.linkedFromUri);
-
-  //       _service.updateIsUserListening(isActive, event.track!.name);
-
-  //       firestoreDatabaseService.getUserDatasToMatch(
-  //           event.track?.name, isActive);
-  //     });
-  //   } catch (e) {
-  //     print("Spotify is not active or disconnected: $e");
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
-    // callSetState();
     return Stack(
       children: [
         Container(
@@ -257,61 +234,26 @@ class _EverythingState extends State<Everything> {
                 ),
               ),
             ),
-            // *************************** FETCH TRACK DATAS ****************************************************
-            ElevatedButton(onPressed: () {}, child: Text("Fetch playlist")),
             widget.connected
-                // ***************************** SHOW THE NAME AND IMAGE OF THE SONG WITH THE PLAYER STATE **************************
                 ? StreamBuilder<PlayerState>(
                     stream: SpotifySdk.subscribePlayerState(),
                     builder: (BuildContext context,
                         AsyncSnapshot<PlayerState> snapshot) {
-                      // TODO: Aşağıda eşleşme algoritmasını daha az işlemci kullanacak mı diye test ediyorum. Stabil çalışmazsa eski startTimer() metoduna geçeçceğiz.
-
                       var track = snapshot.data?.track;
                       currentTrackImageUri = track?.imageUri;
                       var playerState = snapshot.data;
                       firestoreDatabaseService.updateActiveStatus();
-
-                      print(
-                          "URL of the Image of the current track: ${playerState?.track?.linkedFromUri.toString()}");
-
-                      print(
-                          "URL of the Image of the current track: ${playerState?.track?.imageUri.toString()}");
-
-                      // _startTimer();
 
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Center(child: CircularProgressIndicator());
                       }
 
                       if (snapshot.hasData) {
-                        //TODO: Aşağıya bir şekilde stream entegre et.
                         return Column(
                           children: <Widget>[
                             SizedBox(
                               height: screenHeight / 600,
                             ),
-                            // FutureBuilder(
-                            //   future: SpotifySdk.getImage(
-                            //     imageUri: track!.imageUri,
-                            //     dimension: ImageDimension.large,
-                            //   ),
-                            //   builder: (BuildContext context,
-                            //       AsyncSnapshot<Uint8List?> snapshot) {
-                            //     if (snapshot.hasData) {
-                            //       return Padding(
-                            //         padding: EdgeInsets.only(
-                            //             top:
-                            //                 MediaQuery.of(context).size.height /
-                            //                     11),
-                            //         child: Image.memory(snapshot.data!),
-                            //       );
-                            //     } else {
-                            //       return const Center(
-                            //           child: CircularProgressIndicator());
-                            //     }
-                            //   },
-                            // ),
                             Text(
                               '${snapshot.data!.track!.artist.name} - ${snapshot.data!.track!.name} ',
                               style: const TextStyle(fontSize: 22),
@@ -326,6 +268,36 @@ class _EverythingState extends State<Everything> {
                 : const Center(
                     child: Text('Not connected'),
                   ),
+            // ******************************  PLAYLISTS **************************
+            FutureBuilder<List<Playlist>>(
+              future: futurePlaylists,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No playlists found'));
+                } else {
+                  final playlists = snapshot.data!;
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: playlists.length,
+                    itemBuilder: (context, index) {
+                      final playlist = playlists[index];
+                      return ListTile(
+                        leading: playlist.images.isNotEmpty
+                            ? Image.network(playlist.images.first.url)
+                            : null,
+                        title: Text(playlist.name),
+                        subtitle: Text(playlist.description),
+                      );
+                    },
+                  );
+                }
+              },
+            ),
           ],
         ),
         _loading

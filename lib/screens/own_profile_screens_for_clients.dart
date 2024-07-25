@@ -6,13 +6,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/business/Spotify_Logic/Models/top_10_track_model.dart';
-// import 'package:spotify_project/business/Spotify_Logic/Models/top_artists_of_the_user.dart';
 import 'package:spotify_project/business/Spotify_Logic/constants.dart';
 import 'package:spotify_project/business/Spotify_Logic/services/fetch_artists.dart';
 import 'package:spotify_project/business/Spotify_Logic/services/fetch_top_10_tracks_of_the_user.dart';
+import 'package:spotify_project/screens/matches_screen.dart';
 import 'package:spotify_project/screens/profile_settings.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
+import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
 class OwnProfileScreenForClients extends StatefulWidget {
@@ -35,7 +36,7 @@ class _OwnProfileScreenForClientsState
   void initState() {
     super.initState();
     _futureArtists = SpotifyServiceForTopArtists(accessToken).fetchArtists();
-    _futureTracks = SpotifyService(accessToken).fetchTracks();
+    _futureTracks = SpotifyServiceForTracks(accessToken).fetchTracks();
   }
 
   @override
@@ -246,74 +247,137 @@ class _OwnProfileScreenForClientsState
                             }
                           }),
                       // ******************** Posts Section **********************
-                      StreamBuilder(
-                          stream: _serviceForSnapshot.getAllSharedPosts(),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              QuerySnapshot querySnapshot =
-                                  snapshot.data as QuerySnapshot;
-                              return Container(
-                                width: screenWidth / 1.4,
-                                height: querySnapshot.docs.length * 760,
-                                child: ListView.builder(
-                                  physics: NeverScrollableScrollPhysics(),
-                                  itemCount: querySnapshot.docs.length,
-                                  itemBuilder: (context, index) {
-                                    DocumentSnapshot documentSnapshot =
-                                        querySnapshot.docs[index];
-                                    return Column(
-                                      children: [
-                                        Container(
-                                          width: screenWidth / 1,
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                                    topRight:
-                                                        Radius.circular(16),
-                                                    topLeft:
-                                                        Radius.circular(16)),
-                                            child: Image(
-                                              fit: BoxFit.fill,
-                                              image: NetworkImage(
-                                                  documentSnapshot[
-                                                      "sharedPost"]),
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: double.infinity,
-                                          height: screenHeight / 8,
-                                          decoration: const BoxDecoration(
-                                              color: Color.fromARGB(
-                                                  255, 221, 219, 219),
-                                              borderRadius: BorderRadius.only(
-                                                  bottomLeft:
-                                                      Radius.circular(16),
-                                                  bottomRight:
-                                                      Radius.circular(16))),
-                                          child: Padding(
-                                            padding: EdgeInsets.all(30),
-                                            child: Center(
-                                              child: Text(
-                                                documentSnapshot["caption"],
-                                                style:
-                                                    TextStyle(fontSize: 25.sp),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height: screenHeight / 16,
-                                        )
-                                      ],
-                                    );
-                                  },
+                      // StreamBuilder(
+                      //     stream: _serviceForSnapshot.getAllSharedPosts(),
+                      //     builder: (context, snapshot) {
+                      //       if (snapshot.hasData) {
+                      //         QuerySnapshot querySnapshot =
+                      //             snapshot.data as QuerySnapshot;
+                      //         return Container(
+                      //           width: screenWidth / 1.4,
+                      //           height: querySnapshot.docs.length * 760,
+                      //           child: ListView.builder(
+                      //             physics: NeverScrollableScrollPhysics(),
+                      //             itemCount: querySnapshot.docs.length,
+                      //             itemBuilder: (context, index) {
+                      //               DocumentSnapshot documentSnapshot =
+                      //                   querySnapshot.docs[index];
+                      //               return Column(
+                      //                 children: [
+                      //                   Container(
+                      //                     width: screenWidth / 1,
+                      //                     child: ClipRRect(
+                      //                       borderRadius:
+                      //                           const BorderRadius.only(
+                      //                               topRight:
+                      //                                   Radius.circular(16),
+                      //                               topLeft:
+                      //                                   Radius.circular(16)),
+                      //                       child: Image(
+                      //                         fit: BoxFit.fill,
+                      //                         image: NetworkImage(
+                      //                             documentSnapshot[
+                      //                                 "sharedPost"]),
+                      //                       ),
+                      //                     ),
+                      //                   ),
+                      //                   Container(
+                      //                     width: double.infinity,
+                      //                     height: screenHeight / 8,
+                      //                     decoration: const BoxDecoration(
+                      //                         color: Color.fromARGB(
+                      //                             255, 221, 219, 219),
+                      //                         borderRadius: BorderRadius.only(
+                      //                             bottomLeft:
+                      //                                 Radius.circular(16),
+                      //                             bottomRight:
+                      //                                 Radius.circular(16))),
+                      //                     child: Padding(
+                      //                       padding: EdgeInsets.all(30),
+                      //                       child: Center(
+                      //                         child: Text(
+                      //                           documentSnapshot["caption"],
+                      //                           style:
+                      //                               TextStyle(fontSize: 25.sp),
+                      //                         ),
+                      //                       ),
+                      //                     ),
+                      //                   ),
+                      //                   SizedBox(
+                      //                     height: screenHeight / 16,
+                      //                   )
+                      //                 ],
+                      //               );
+                      //             },
+                      //           ),
+                      //         );
+                      //       } else {
+                      //         return CircularProgressIndicator();
+                      //       }
+                      //     }),
+
+                      StreamBuilder<PlayerState>(
+                        stream: SpotifySdk.subscribePlayerState(),
+                        builder: (BuildContext context,
+                            AsyncSnapshot<PlayerState> snapshot) {
+                          // TODO: Aşağıda eşleşme algoritmasını daha az işlemci kullanacak mı diye test ediyorum. Stabil çalışmazsa eski startTimer() metoduna geçeçceğiz.
+
+                          var track = snapshot.data?.track;
+                          var playerState = snapshot.data;
+                          firestoreDatabaseService.updateActiveStatus();
+
+                          print(
+                              "URL of the Image of the current track: ${playerState?.track?.linkedFromUri.toString()}");
+
+                          print(
+                              "URL of the Image of the current track: ${playerState?.track?.imageUri.toString()}");
+
+                          // _startTimer();
+
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          }
+
+                          if (snapshot.hasData) {
+                            //TODO: Aşağıya bir şekilde stream entegre et.
+                            return Column(
+                              children: <Widget>[
+                                SizedBox(
+                                  height: screenHeight / 600,
                                 ),
-                              );
-                            } else {
-                              return CircularProgressIndicator();
-                            }
-                          }),
+                                // FutureBuilder(
+                                //   future: SpotifySdk.getImage(
+                                //     imageUri: track!.imageUri,
+                                //     dimension: ImageDimension.large,
+                                //   ),
+                                //   builder: (BuildContext context,
+                                //       AsyncSnapshot<Uint8List?> snapshot) {
+                                //     if (snapshot.hasData) {
+                                //       return Padding(
+                                //         padding: EdgeInsets.only(
+                                //             top:
+                                //                 MediaQuery.of(context).size.height /
+                                //                     11),
+                                //         child: Image.memory(snapshot.data!),
+                                //       );
+                                //     } else {
+                                //       return const Center(
+                                //           child: CircularProgressIndicator());
+                                //     }
+                                //   },
+                                // ),
+                                Text(
+                                  '${snapshot.data!.track!.artist.name} - ${snapshot.data!.track!.name} ',
+                                  style: const TextStyle(fontSize: 22),
+                                ),
+                              ],
+                            );
+                          } else {
+                            return Center(child: CircularProgressIndicator());
+                          }
+                        },
+                      ),
                       FutureBuilder<SpotifyArtistsResponse>(
                         future: _futureArtists,
                         builder: (context, snapshot) {

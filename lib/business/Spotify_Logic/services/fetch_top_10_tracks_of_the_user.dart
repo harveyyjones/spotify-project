@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:spotify_project/business/Spotify_Logic/Models/top_10_track_model.dart';
 
-class SpotifyService {
+class SpotifyServiceForTracks {
   final String accessToken;
 
-  SpotifyService(this.accessToken);
+  SpotifyServiceForTracks(this.accessToken);
 
   Future<List<SpotifyTrack>> fetchTracks() async {
     final response = await http.get(

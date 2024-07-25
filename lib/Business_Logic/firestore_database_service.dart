@@ -568,7 +568,8 @@ class FirestoreDatabaseService {
       var _name = SpotifySdk.subscribePlayerState();
       if (isActive) {
         _name.listen((event) async {
-          print("*****************************************************");
+          print(
+              "*********************  UpdateActiveStatusMethod Triggered. ********************************");
           print(isActive);
           print(event.track?.name ?? "");
           print(event.track!.imageUri.raw);
