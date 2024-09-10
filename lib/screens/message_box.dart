@@ -37,19 +37,18 @@ class _MessageScreenState extends State<MessageScreen> {
           child: Column(
             children: [
               // ******************** LIKED PEOPLE DISPLAY *************************
-              Padding(
-                padding: EdgeInsets.only(
-                    top: screenHeight / 35, bottom: screenHeight / 50),
-                child: Container(
-                  width: screenWidth / 1.1,
-                  height: screenHeight / 8,
-                  color: Color.fromARGB(0, 211, 176, 73),
-                  child: FutureBuilder<List<UserModel>>(
-                    future: firestoreDatabaseService.getLikedPeople(),
-                    builder:
-                        (context, AsyncSnapshot<List<UserModel>> snapshot) {
-                      if (snapshot.hasData) {
-                        return ListView.builder(
+              FutureBuilder<List<UserModel>>(
+                future: firestoreDatabaseService.getLikedPeople(),
+                builder: (context, AsyncSnapshot<List<UserModel>> snapshot) {
+                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                          top: screenHeight / 35, bottom: screenHeight / 50),
+                      child: Container(
+                        width: screenWidth / 1.1,
+                        height: screenHeight / 8,
+                        color: Color.fromARGB(0, 211, 176, 73),
+                        child: ListView.builder(
                           physics: const ScrollPhysics(
                               parent: AlwaysScrollableScrollPhysics()),
                           scrollDirection: Axis.horizontal,
@@ -62,7 +61,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                   Navigator.of(context).push(CupertinoPageRoute(
                                     builder: (context) => ChatScreen(
                                         snapshot.data![index].userId.toString(),
-                                        snapshot.data![index].profilePhotoURL,
+                                        snapshot.data![index].profilePhotos[0],
                                         snapshot.data![index].name.toString()),
                                   ));
                                 },
@@ -70,18 +69,18 @@ class _MessageScreenState extends State<MessageScreen> {
                                   minRadius: 30,
                                   maxRadius: 70.sp,
                                   foregroundImage: NetworkImage(
-                                      snapshot.data![index].profilePhotoURL),
+                                      snapshot.data![index].profilePhotos[0]),
                                 ),
                               ),
                             );
                           },
-                        );
-                      } else {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                    },
-                  ),
-                ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return SizedBox(height: 1); // Small SizedBox when no liked people
+                  }
+                },
               ),
               Divider(
                 color: Color.fromARGB(102, 0, 0, 0),
@@ -115,7 +114,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                               // TODO: Buraya ayar çek.
                                               return ChatScreen(
                                                 data.userId.toString(),
-                                                data.profilePhotoURL.toString(),
+                                                data.profilePhotos[0].toString(),
                                                 data.name.toString(),
                                               );
                                             },
@@ -148,7 +147,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                                             backgroundImage: NetworkImage(
                                                                 snapshotForUserInfo
                                                                     .data!
-                                                                    .profilePhotoURL
+                                                                    .profilePhotos[0]
                                                                     .toString())),
                                                       ),
                                                       Padding(

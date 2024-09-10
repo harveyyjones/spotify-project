@@ -1,56 +1,121 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/main.dart';
-import 'package:spotify_project/screens/chat_screen.dart';
+import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_project/widgets/swipe_card.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
-import 'package:swipe_cards/swipe_cards.dart';
-import 'package:spotify_sdk/models/connection_status.dart';
-import 'package:spotify_sdk/models/image_uri.dart';
-import 'package:spotify_sdk/models/player_state.dart';
-import 'package:spotify_sdk/spotify_sdk.dart';
 
 class MatchesScreen extends StatefulWidget {
-  const MatchesScreen({super.key});
+  const MatchesScreen({Key? key}) : super(key: key);
 
   @override
   State<MatchesScreen> createState() => _MatchesScreenState();
 }
 
-FirestoreDatabaseService firestoreDatabaseService = FirestoreDatabaseService();
-
 class _MatchesScreenState extends State<MatchesScreen> {
+  final FirestoreDatabaseService _firestoreDatabaseService = FirestoreDatabaseService();
+  String? _errorMessage;
+  bool _isLoading = true;
+  List<dynamic>? _matchData;
+
   @override
   void initState() {
     super.initState();
-    print("initstate metodu tetiklendi.");
+    _initializeUserData();
   }
 
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
+  Future<void> _initializeUserData() async {
+    try {
+      String currentlyListeningMusicName = await _getCurrentlyListeningMusic();
+      bool isSpotifyActive = await _checkSpotifyStatus();
 
-    firestoreDatabaseService.getUserDatasToMatch(
-      firestoreDatabaseService.returnCurrentlyListeningMusicName(),
-      SpotifySdk.isSpotifyAppActive,
+      await _firestoreDatabaseService.getUserDatasToMatch(
+        currentlyListeningMusicName,
+        isSpotifyActive,
+      );
+
+      _matchData = await _firestoreDatabaseService.getUserDataViaUId();
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Error initializing user data: $e";
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<String> _getCurrentlyListeningMusic() async {
+    try {
+      String? musicName = await _firestoreDatabaseService.returnCurrentlyListeningMusicName();
+      return musicName ?? '';
+    } catch (e) {
+      print("Error getting currently listening music: $e");
+      return '';
+    }
+  }
+
+  Future<bool> _checkSpotifyStatus() async {
+    try {
+      return await SpotifySdk.isSpotifyAppActive;
+    } catch (e) {
+      print("Error checking Spotify active status: $e");
+      return false;
+    }
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Text(
+        _errorMessage ?? "An unknown error occurred",
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 18, color: Colors.red),
+      ),
     );
   }
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    print("didChangeDependencies method triggered.");
+  Widget _buildLoadingWidget() {
+    return const Center(
+      child: CircularProgressIndicator(color: Colors.black),
+    );
+  }
 
-    // Your initialization logic here
-    await firestoreDatabaseService.getUserDatasToMatch(
-      firestoreDatabaseService.returnCurrentlyListeningMusicName(),
-      SpotifySdk.isSpotifyAppActive,
+  Widget _buildNoDataWidget(String message) {
+    return Center(
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildMatchesWidget() {
+    if (_matchData == null || _matchData!.isEmpty) {
+      return _buildNoDataWidget("No matches found. Try listening to some music!");
+    }
+
+    if (_matchData!.length == 1 && _matchData![0].userId == currentUser?.uid) {
+      return _buildNoDataWidget("There is no match yet, listen to some music or use quick match!");
+    }
+
+    return Container(
+      color: Color.fromARGB(255, 234, 243, 252),
+      child: Column(
+        children: [
+          const SizedBox(width: double.infinity),
+          Container(
+            width: screenWidth - 30,
+            height: screenHeight * (12 / 13),
+            child: SwipeCardWidget(snapshotData: _matchData),
+          ),
+        ],
+      ),
     );
   }
 
@@ -58,165 +123,11 @@ class _MatchesScreenState extends State<MatchesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomBar(selectedIndex: 1),
-      body: FutureBuilder(
-          future: firestoreDatabaseService.getUserDataViaUId(),
-          builder: (context, AsyncSnapshot<dynamic> snapshot) {
-            if (snapshot.hasData) {
-              return Container(
-                color: Color.fromARGB(255, 234, 243, 252),
-                child: Column(children: [
-                  const SizedBox(
-                    width: double.infinity,
-                  ),
-                  Container(
-                      width: screenWidth - 30,
-                      height: screenHeight /
-                          (13 /
-                              12), // Bu şekilde ondalık sayı yerine kesirli sayı kullanmanız sayıların değerlerini orantılı olarak yükselterek hassas ölçümler yapmanızı sağlar.
-                      //  color: Colors.black,
-                      child: SwipeCardWidget(
-                        snapshotData: snapshot.data,
-                      )),
-                ]),
-              );
-            } else {
-              //TODO: Buralara daha güzel gözüken bir loading ekranı ayarlanacak.
-              return const Center(
-                  child: CircularProgressIndicator(
-                color: Color.fromARGB(255, 0, 0, 0),
-              ));
-            }
-          }),
-    );
-  }
-}
-
-class CardsForNotifications extends StatefulWidget {
-  var name;
-  var profilePhotoUrl;
-  var index;
-  String userId;
-  CardsForNotifications({
-    super.key,
-    required this.name,
-    required this.profilePhotoUrl,
-    this.index,
-    required this.userId,
-  });
-
-  @override
-  State<CardsForNotifications> createState() => _CardsFornyificationsState();
-}
-
-class _CardsFornyificationsState extends State<CardsForNotifications> {
-  final FirestoreDatabaseService _firestoreDatabaseService =
-      FirestoreDatabaseService();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        StreamBuilder<PlayerState>(
-          stream: SpotifySdk.subscribePlayerState(),
-          builder: (BuildContext context, AsyncSnapshot<PlayerState> snapshot) {
-            // TODO: Aşağıda eşleşme algoritmasını daha az işlemci kullanacak mı diye test ediyorum. Stabil çalışmazsa eski startTimer() metoduna geçeçceğiz.
-
-            var track = snapshot.data?.track;
-            currentTrackImageUri = track?.imageUri;
-            var playerState = snapshot.data;
-
-            firestoreDatabaseService.updateActiveStatus();
-            print(
-                "URL of the Image of the current track: ${playerState?.track?.linkedFromUri.toString()}");
-
-            print(
-                "URL of the Image of the current track: ${playerState?.track?.imageUri.toString()}");
-
-            // _startTimer();
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
-
-            if (snapshot.hasData) {
-              //TODO: Aşağıya bir şekilde stream entegre et.
-              return Column(
-                children: <Widget>[
-                  SizedBox(
-                    height: screenHeight / 600,
-                  ),
-                ],
-              );
-            } else {
-              return Center(child: CircularProgressIndicator());
-            }
-          },
-        ),
-        FutureBuilder(
-          future:
-              _firestoreDatabaseService.getTheMutualSongViaUId(widget.userId),
-          builder: (context, AsyncSnapshot snapshot) {
-            if (snapshot.hasData) {
-              return InkWell(
-                onTap: () => Navigator.of(context, rootNavigator: false)
-                    .push(MaterialPageRoute(
-                  builder: (context) => ChatScreen(
-                      widget.userId, widget.profilePhotoUrl, widget.name),
-                )),
-                child: Container(
-                  decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.shade400,
-                          offset: Offset(1, 2),
-                          blurRadius: 1,
-                          blurStyle: BlurStyle.outer,
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(22),
-                      color: Colors.white),
-                  width: screenWidth / 1.1,
-                  height: screenHeight / 7,
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: screenWidth / 33,
-                      ),
-                      CircleAvatar(
-                          maxRadius: screenWidth / 11,
-                          minRadius: 20,
-                          backgroundImage:
-                              NetworkImage(widget.profilePhotoUrl)),
-                      SizedBox(
-                        width: screenWidth / 32,
-                      ),
-                      Column(
-                        children: [
-                          SizedBox(
-                            height: screenHeight / 55,
-                          ),
-                          Container(
-                            width: screenWidth / 1.6,
-                            height: screenHeight / 10,
-                            color: Colors.white,
-                            child: Text(
-                              softWrap: true,
-                              "You've listened \"${snapshot.data!.toString()} with ${widget.name} at the same time.",
-                              style: TextStyle(fontSize: 33.sp, height: 1.2),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            } else {
-              return SizedBox();
-            }
-          },
-        ),
-      ],
+      body: _isLoading
+          ? _buildLoadingWidget()
+          : _errorMessage != null
+              ? _buildErrorWidget()
+              : _buildMatchesWidget(),
     );
   }
 }

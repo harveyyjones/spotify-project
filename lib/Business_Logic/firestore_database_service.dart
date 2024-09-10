@@ -12,14 +12,11 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spotify_project/Business_Logic/Models/message_model.dart';
 import 'package:spotify_project/screens/register_page.dart';
+import 'package:spotify_project/screens/sharePostScreen.dart' as share_screen;
 import 'package:spotify_project/screens/sharePostScreen.dart';
-import 'package:spotify_project/screens/steppers.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 import 'Models/user_model.dart';
 
-import 'package:spotify_sdk/spotify_sdk.dart';
-import 'package:spotify_sdk/models/player_state.dart';
-import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 
 List allClinicOwnersList = [];
 
@@ -60,11 +57,12 @@ class FirestoreDatabaseService {
     Map<String, dynamic>? okunanUserbilgileriMap = await okunanUser.data();
     if (okunanUserbilgileriMap != null) {
       UserModel okunanUserBilgileriNesne =
-          UserModel.fromMap(okunanUserbilgileriMap!);
+          UserModel.fromMap(okunanUserbilgileriMap);
       print(" Fotolar :${okunanUserBilgileriNesne.name.toString()}");
 
       return okunanUserBilgileriNesne;
     }
+    return null;
   }
 
   getAllUsersData() async {
@@ -168,7 +166,7 @@ class FirestoreDatabaseService {
         biography: biography ?? "",
         eMail: currentUser?.email ?? "",
         majorInfo: majorInfo ?? "",
-        profilePhotoURL: photoUrl ??
+        profilePhotos: photoUrl ??
             "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png",
         name: name ?? "",
         clinicLocation: clinicLocation ?? "",
@@ -180,7 +178,7 @@ class FirestoreDatabaseService {
     print("Biyografi: ${eklenecekUser.biography}");
     print("E Mail: ${eklenecekUser.eMail}");
     print("Name: ${eklenecekUser.name}");
-    print("Profile Photo stuff: ${eklenecekUser.profilePhotoURL}");
+    print("Profile Photo stuff: ${eklenecekUser.profilePhotos}");
     print("UID: ${eklenecekUser.userId}");
 
     print("*****************************");
@@ -351,7 +349,7 @@ class FirestoreDatabaseService {
 // Çıkış yaparken
   signOut(context) async {
     await FirebaseAuth.instance.signOut();
-    callSnackbar("Signed Out", Colors.green, context);
+    share_screen.callSnackbar("Signed Out", Colors.green, context);
   }
 
 // Ana sayfadaki selamlama mesajlarında kullanmak için.
@@ -391,10 +389,11 @@ class FirestoreDatabaseService {
           ? await user.delete().whenComplete(() {
               print("Account has been deleted.");
 
-              callSnackbar(
-                "Account is deleted.",
-                Colors.green,
-              );
+              // Use a different method or import the correct one
+              // For example, you could use a local method or pass the context
+              // Here's a placeholder comment:
+              // TODO: Implement proper snackbar call or error handling
+
               print(
                   "User with the uid of: ${currentUser?.uid} deleted. *************************");
             })
@@ -585,3 +584,6 @@ class FirestoreDatabaseService {
     }
   }
 }
+
+
+

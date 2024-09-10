@@ -8,9 +8,11 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
+import 'package:spotify_project/screens/login_page.dart';
 import 'package:spotify_project/screens/own_profile_screens_for_clients.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/screens/steppers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileSettings extends StatefulWidget {
   const ProfileSettings({super.key});
@@ -24,6 +26,35 @@ late FirebaseFirestore _instance = FirebaseFirestore.instance;
 
 class _ProfileSettingsState extends State<ProfileSettings> {
   File? _image;
+  String? _imageUrl;
+
+  Future<void> uploadImageToDatabase() async {
+    if (_image == null || !mounted) return;
+
+    try {
+      UploadTask? uploadTask;
+      Reference ref = FirebaseStorage.instance
+          .ref()
+          .child("users")
+          .child(currentUser!.uid)
+          .child("profil.jpg");
+
+      uploadTask = ref.putFile(_image!);
+      await uploadTask.whenComplete(() async {
+        String value = await ref.getDownloadURL();
+        if (mounted) {
+          setState(() {
+            _imageUrl = value;
+          });
+          await _databaseService.updateProfilePhoto(_imageUrl!);
+        }
+      });
+      print("Profile photo URL from settings: $_imageUrl");
+    } catch (e) {
+      print("Error uploading image: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Future<File?> cropImage(File imageFile) async {
@@ -36,35 +67,19 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
     Future pickImage(ImageSource source) async {
       try {
-        uploadImageToDatabase() async {
-          UploadTask? uploadTask;
-          Reference ref = FirebaseStorage.instance
-              .ref()
-              .child("users")
-              .child(currentUser!.uid)
-              .child("profil.jpg");
-
-          uploadTask = ref.putFile(_image!);
-          var uri = await (uploadTask
-              .whenComplete(() => ref.getDownloadURL().then((value) {
-                    downloadImageURL = value;
-                    setState(() {});
-                    _databaseService.updateProfilePhoto(downloadImageURL!);
-                  })));
-          print("Profil fotosu URL'i ayarlardan : ${downloadImageURL}");
-        }
-
         final image = await ImagePicker().pickImage(source: source);
         if (image == null) {
           return;
         } else {
           File? img = File(image.path);
           img = (await cropImage(img));
-          setState(() {
-            _image = img;
-          });
+          if (mounted) { // Check if widget is still mounted
+            setState(() {
+              _image = img;
+            });
+          }
 
-          uploadImageToDatabase();
+          await uploadImageToDatabase();
         }
       } on PlatformException catch (e) {
         print(e.message);
@@ -151,12 +166,24 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                                 left: screenWidth / 3.4,
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(13),
-                                  child: Image(
-                                      width: screenWidth / 2.5,
-                                      fit: BoxFit.fill,
-                                      image: NetworkImage(
-                                          snapshot.data!["profilePhotoURL"] ??
-                                              "")),
+                                  child: snapshot.data!["profilePhotoURL"] != null &&
+                                          snapshot.data!["profilePhotoURL"].isNotEmpty
+                                      ? Image(
+                                          width: screenWidth / 2.5,
+                                          fit: BoxFit.fill,
+                                          image: NetworkImage(
+                                              snapshot.data!["profilePhotoURL"]),
+                                        )
+                                      : Container(
+                                          width: screenWidth / 2.5,
+                                          height: screenWidth / 2.5, // Make it square
+                                          color: Colors.grey[300],
+                                          child: Icon(
+                                            Icons.person,
+                                            size: screenWidth / 5,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
                                 ),
                               ),
                             ],
@@ -348,6 +375,42 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                       const Expanded(
                         child: SizedBox(),
                       ),
+                      
+                      // Modify the Logout Button
+                      ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            await FirebaseAuth.instance.signOut();
+                            // Navigate to login screen
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (context) => LoginPage()),
+                              (Route<dynamic> route) => false,
+                            );
+                          } catch (e) {
+                            print("Error signing out: $e");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Failed to log out. Please try again.")),
+                            );
+                          }
+                        },
+                        child: Text('Logout'),
+                      ),
+                      
+                      SizedBox(height: 20),
+                      
+                      // Add Delete Account Button
+                      ElevatedButton(
+                        onPressed: () {
+                          // Show confirmation dialog before deleting account
+                          showDeleteAccountConfirmationDialog(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: Text('Delete Account'),
+                      ),
+                      
+                      SizedBox(height: 40),
                     ],
                   )),
             );
@@ -356,6 +419,34 @@ class _ProfileSettingsState extends State<ProfileSettings> {
           }
         },
       ),
+    );
+  }
+
+  void showDeleteAccountConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Delete Account"),
+          content: Text("Are you sure you want to delete your account? This action cannot be undone."),
+          actions: [
+            TextButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Delete"),
+              onPressed: () {
+                // TODO: Implement account deletion logic
+                // For example: AuthService.deleteAccount();
+                // Then navigate to login or registration screen
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

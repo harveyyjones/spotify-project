@@ -11,7 +11,6 @@ import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/screens/message_box.dart';
 import 'package:spotify_project/screens/profile_screen.dart';
 import 'package:spotify_project/screens/register_page.dart';
-import 'package:spotify_project/screens/steppers.dart';
 import 'package:spotify_project/widgets/divider_for_chat.dart';
 
 import 'package:intl/intl.dart';

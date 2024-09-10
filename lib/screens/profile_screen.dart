@@ -8,6 +8,7 @@ import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/screens/profile_settings.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
+import 'package:spotify_project/widgets/image_carousel.dart';
 
 class ProfileScreen extends StatefulWidget {
   ProfileScreen({Key? key, required this.uid}) : super(key: key);
@@ -25,71 +26,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: _serviceForSnapshot.getUserDataForDetailPage(widget.uid),
-        builder: (context, snapshot) => snapshot.hasData
-            ? Scaffold(
-                appBar: AppBar(
-                  backgroundColor: Colors.transparent,
-                  leading: IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.arrow_back_ios)),
-                ),
-                backgroundColor: Color(0xfff2f9ff),
-                bottomNavigationBar: snapshot.data!.clinicOwner ?? true
-                    ? BottomBar(
-                        selectedIndex: 2,
-                      )
-                    : BottomBar(selectedIndex: 2),
-                body: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      FutureBuilder(
-                          future: _serviceForSnapshot
-                              .getUserDataForDetailPage(widget.uid),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              return Container(
-                                width: screenWidth,
+  future: _serviceForSnapshot.getUserDataForDetailPage(widget.uid),
+  builder: (context, snapshot) => snapshot.hasData
+      ? Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            leading: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: Icon(Icons.arrow_back_ios),
+            ),
+          ),
+          backgroundColor: Color(0xfff2f9ff),
+          bottomNavigationBar: snapshot.data!.clinicOwner ?? true
+              ? BottomBar(selectedIndex: 2)
+              : BottomBar(selectedIndex: 2),
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                FutureBuilder(
+                  future: _serviceForSnapshot.getUserDataForDetailPage(widget.uid),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      // Retrieve profile pictures (if they are stored in a list)
+                      List<String> profilePhotos = snapshot.data!.profilePhotos;
 
-                                // color: Color(0xffecfeff),
-                                child: Column(
-                                  children: [
-                                    SizedBox(
-                                      height: screenHeight / 14,
-                                    ),
-                                    Stack(
-                                      children: [
-                                        Container(
-                                          //  color: Colors.amber,
-                                          height: screenHeight / 2.6,
-                                        ),
-                                        Positioned(
-                                          top: screenHeight / 8.5,
-                                          left: screenWidth / 3.4,
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(13),
-                                            child: Image(
-                                              width: screenWidth / 2.5,
-                                              fit: BoxFit.fill,
-                                              image: NetworkImage(snapshot.data!
-                                                              .profilePhotoURL !=
-                                                          null &&
-                                                      snapshot
-                                                          .data!
-                                                          .profilePhotoURL!
-                                                          .isNotEmpty
-                                                  ? snapshot
-                                                      .data!.profilePhotoURL!
-                                                  : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"),
-                                            ),
+                      return Container(
+                        width: screenWidth,
+                        child: Column(
+                          children: [
+                            SizedBox(height: screenHeight / 14),
+                            Stack(
+                              children: [
+                                Container(
+                                  height: screenHeight / 2.6,
+                                ),
+                                // If multiple images are available, display them in a carousel (PageView)
+                                Positioned(
+                                  top: screenHeight / 8.5,
+                                  left: screenWidth / 3.4,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(13),
+                                    child: profilePhotos.isNotEmpty
+                                        ? ImageCarousel(
+                                            imageUrls: profilePhotos,
+                                            height: screenHeight / 2.6,
+                                            width: screenWidth / 2.5,
+                                          )
+                                        : Image.network(
+                                            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png",
+                                            fit: BoxFit.fill,
+                                            height: screenHeight / 2.6,
+                                            width: screenWidth / 2.5,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: screenHeight / 3330,
-                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: screenHeight / 3330),
                                     // ******************** isim ***********************
                                     Text(
                                         snapshot.data!.name ??

@@ -9,12 +9,12 @@ import 'package:spotify_project/business/Spotify_Logic/Models/top_10_track_model
 import 'package:spotify_project/business/Spotify_Logic/constants.dart';
 import 'package:spotify_project/business/Spotify_Logic/services/fetch_artists.dart';
 import 'package:spotify_project/business/Spotify_Logic/services/fetch_top_10_tracks_of_the_user.dart';
-import 'package:spotify_project/screens/matches_screen.dart';
 import 'package:spotify_project/screens/profile_settings.dart';
 import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OwnProfileScreenForClients extends StatefulWidget {
   OwnProfileScreenForClients({Key? key}) : super(key: key);
@@ -27,445 +27,311 @@ class OwnProfileScreenForClients extends StatefulWidget {
 class _OwnProfileScreenForClientsState
     extends State<OwnProfileScreenForClients> {
   final ScrollController _scrollController = ScrollController();
+  final PageController _pageController = PageController();
   final FirestoreDatabaseService _serviceForSnapshot =
       FirestoreDatabaseService();
-  late Future<SpotifyArtistsResponse> _futureArtists;
-  late Future<List<SpotifyTrack>> _futureTracks;
+  late Future<Map<String, dynamic>> _combinedFuture;
+  Map<String, dynamic>? _cachedData;
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _futureArtists = SpotifyServiceForTopArtists(accessToken).fetchArtists();
-    _futureTracks = SpotifyServiceForTracks(accessToken).fetchTracks();
+    _combinedFuture = _loadAllData();
+  }
+
+  Future<Map<String, dynamic>> _loadAllData() async {
+    if (_cachedData != null) {
+      return _cachedData!;
+    }
+
+    final userData = await _serviceForSnapshot.getUserData();
+    final artists = await SpotifyServiceForTopArtists(accessToken).fetchArtists();
+    final tracks = await SpotifyServiceForTracks(accessToken).fetchTracks();
+
+    _cachedData = {
+      'userData': userData,
+      'artists': artists,
+      'tracks': tracks,
+    };
+
+    return _cachedData!;
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: _serviceForSnapshot.getUserData(),
-        builder: (context, snapshot) => snapshot.hasData
-            ? Scaffold(
-                floatingActionButton: FloatingActionButton(
-                  elevation: 0,
-                  child: Icon(Icons.plus_one),
-                  onPressed: () async {
-                    await _serviceForSnapshot.sharePost(
-                        ImageSource.gallery, context);
-                  },
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _combinedFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator(color: Colors.yellow));
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.white)));
+        }
+        if (!snapshot.hasData) {
+          return Center(child: Text('No data available', style: TextStyle(color: Colors.white)));
+        }
+
+        final data = snapshot.data!;
+        final userData = data['userData'];
+        final artists = data['artists'] as SpotifyArtistsResponse;
+        final tracks = data['tracks'] as List<SpotifyTrack>;
+
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverToBoxAdapter(child: _buildUserProfile(userData)),
+              // SliverToBoxAdapter(child: _buildCurrentTrack()),
+              SliverToBoxAdapter(child: _buildTopArtists(artists)),
+              SliverToBoxAdapter(child: Divider(thickness: 1, color: Colors.yellow.withOpacity(0.5))),
+              SliverToBoxAdapter(child: _buildTopTracks(tracks)),
+            ],
+          ),
+          bottomNavigationBar: BottomBar(
+            selectedIndex: userData.clinicOwner ?? true ? 2 : 2,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildUserProfile(dynamic userData) {
+    List<String> profilePhotos = userData.profilePhotos ?? [];
+    String defaultImage = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
+    
+    if (profilePhotos.isEmpty) {
+      profilePhotos = [defaultImage];
+    }
+
+    return Stack(
+      children: [
+        Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: profilePhotos.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentImageIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return Image.network(
+                profilePhotos[index],
+                fit: BoxFit.cover,
+                loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          : null,
+                      color: Colors.yellow,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => Icon(Icons.error, color: Colors.yellow),
+              );
+            },
+          ),
+        ),
+        Positioned(
+          top: 40,
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: profilePhotos.asMap().entries.map((entry) {
+              return Container(
+                width: MediaQuery.of(context).size.width / profilePhotos.length - 4,
+                height: 2,
+                margin: EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: _currentImageIndex == entry.key ? Colors.yellow : Colors.white.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(1),
                 ),
-                backgroundColor: Color(0xfff2f9ff),
-                bottomNavigationBar: snapshot.data!.clinicOwner ?? true
-                    ? BottomBar(
-                        selectedIndex: 2,
-                      )
-                    : BottomBar(selectedIndex: 2),
-                body: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      FutureBuilder(
-                          future: _serviceForSnapshot.getUserData(),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              return Container(
-                                width: screenWidth,
-                                child: Column(
-                                  children: [
-                                    SizedBox(
-                                      height: screenHeight / 14,
-                                    ),
-                                    Stack(
-                                      children: [
-                                        Container(
-                                          height: screenHeight / 2.6,
-                                        ),
-                                        Positioned(
-                                          top: screenHeight / 8.5,
-                                          left: screenWidth / 3.4,
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(13),
-                                            child: Image(
-                                              width: screenWidth / 2.5,
-                                              fit: BoxFit.fill,
-                                              image: NetworkImage(snapshot.data!
-                                                              .profilePhotoURL !=
-                                                          null &&
-                                                      snapshot
-                                                          .data!
-                                                          .profilePhotoURL!
-                                                          .isNotEmpty
-                                                  ? snapshot
-                                                      .data!.profilePhotoURL!
-                                                  : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"),
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                            top: screenHeight / 3.4,
-                                            right: screenWidth / 3.8,
-                                            child: InkWell(
-                                              onTap: () {
-                                                Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          ProfileSettings(),
-                                                    ));
-                                              },
-                                              child: Hero(
-                                                  tag: "Profile Screen",
-                                                  child: Icon(
-                                                    Icons.settings,
-                                                    size: 80.sp,
-                                                  )),
-                                            )),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: screenHeight / 3330,
-                                    ),
-                                    Text(
-                                        snapshot.data!.name ??
-                                            currentUser!.displayName!,
-                                        style: GoogleFonts.poppins(
-                                            fontSize: 52.sp,
-                                            color:
-                                                Color.fromARGB(255, 58, 57, 57),
-                                            fontWeight: FontWeight.w500)),
-                                    SizedBox(
-                                      height: screenHeight / 55,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 55),
-                                      child: Text(
-                                        snapshot.data!.biography ??
-                                            "That'd be just okay if you listen Rock.",
-                                        softWrap: true,
-                                        style: TextStyle(
-                                            fontFamily: "Javanese",
-                                            height: 1.3,
-                                            fontSize: 40.sp,
-                                            color: Color.fromARGB(
-                                                255, 72, 71, 71)),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: screenHeight / 122,
-                                    ),
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          width: screenWidth / 10,
-                                          height: screenHeight / 44,
-                                        ),
-                                        Expanded(
-                                          child: Container(
-                                            padding: EdgeInsets.only(
-                                                right: screenWidth / 77,
-                                                top: screenHeight / 30),
-                                            child: Text(
-                                              snapshot.data!.clinicName ??
-                                                  "mango hosp",
-                                              softWrap: true,
-                                              style: TextStyle(
-                                                  fontFamily: "Javanese",
-                                                  height: 1.3,
-                                                  fontSize: 36.sp,
-                                                  color: Color(0xff707070)),
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: screenWidth / 17,
-                                        )
-                                      ],
-                                    ),
-                                    Row(
-                                      children: [
-                                        SizedBox(
-                                          width: screenWidth / 10,
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: [
-                                        SizedBox(
-                                          width: screenWidth / 10,
-                                        ),
-                                        Expanded(
-                                          child: Container(
-                                            padding: EdgeInsets.only(
-                                                right: screenWidth / 77),
-                                            child: Text(
-                                              snapshot.data!.majorInfo ?? "",
-                                              softWrap: true,
-                                              style: TextStyle(
-                                                  fontFamily: "Javanese",
-                                                  height: 1.3,
-                                                  fontSize: 28.sp,
-                                                  color: Color(0xff707070)),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: [
-                                        SizedBox(
-                                          width: screenWidth / 10,
-                                        ),
-                                        Expanded(
-                                          child: Container(
-                                            padding: EdgeInsets.only(
-                                                right: screenWidth / 77),
-                                            child: Text(
-                                              snapshot.data!.clinicLocation ??
-                                                  "Turkey",
-                                              softWrap: true,
-                                              style: TextStyle(
-                                                  fontFamily: "Javanese",
-                                                  height: 1.3,
-                                                  fontSize: 35.sp,
-                                                  color: Color.fromARGB(
-                                                      255, 78, 78, 78)),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: screenHeight / 22,
-                                    )
-                                  ],
-                                ),
-                              );
-                            } else {
-                              return CircularProgressIndicator();
-                            }
-                          }),
-                      // ******************** Posts Section **********************
-                      // StreamBuilder(
-                      //     stream: _serviceForSnapshot.getAllSharedPosts(),
-                      //     builder: (context, snapshot) {
-                      //       if (snapshot.hasData) {
-                      //         QuerySnapshot querySnapshot =
-                      //             snapshot.data as QuerySnapshot;
-                      //         return Container(
-                      //           width: screenWidth / 1.4,
-                      //           height: querySnapshot.docs.length * 760,
-                      //           child: ListView.builder(
-                      //             physics: NeverScrollableScrollPhysics(),
-                      //             itemCount: querySnapshot.docs.length,
-                      //             itemBuilder: (context, index) {
-                      //               DocumentSnapshot documentSnapshot =
-                      //                   querySnapshot.docs[index];
-                      //               return Column(
-                      //                 children: [
-                      //                   Container(
-                      //                     width: screenWidth / 1,
-                      //                     child: ClipRRect(
-                      //                       borderRadius:
-                      //                           const BorderRadius.only(
-                      //                               topRight:
-                      //                                   Radius.circular(16),
-                      //                               topLeft:
-                      //                                   Radius.circular(16)),
-                      //                       child: Image(
-                      //                         fit: BoxFit.fill,
-                      //                         image: NetworkImage(
-                      //                             documentSnapshot[
-                      //                                 "sharedPost"]),
-                      //                       ),
-                      //                     ),
-                      //                   ),
-                      //                   Container(
-                      //                     width: double.infinity,
-                      //                     height: screenHeight / 8,
-                      //                     decoration: const BoxDecoration(
-                      //                         color: Color.fromARGB(
-                      //                             255, 221, 219, 219),
-                      //                         borderRadius: BorderRadius.only(
-                      //                             bottomLeft:
-                      //                                 Radius.circular(16),
-                      //                             bottomRight:
-                      //                                 Radius.circular(16))),
-                      //                     child: Padding(
-                      //                       padding: EdgeInsets.all(30),
-                      //                       child: Center(
-                      //                         child: Text(
-                      //                           documentSnapshot["caption"],
-                      //                           style:
-                      //                               TextStyle(fontSize: 25.sp),
-                      //                         ),
-                      //                       ),
-                      //                     ),
-                      //                   ),
-                      //                   SizedBox(
-                      //                     height: screenHeight / 16,
-                      //                   )
-                      //                 ],
-                      //               );
-                      //             },
-                      //           ),
-                      //         );
-                      //       } else {
-                      //         return CircularProgressIndicator();
-                      //       }
-                      //     }),
-
-                      StreamBuilder<PlayerState>(
-                        stream: SpotifySdk.subscribePlayerState(),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<PlayerState> snapshot) {
-                          // TODO: Aşağıda eşleşme algoritmasını daha az işlemci kullanacak mı diye test ediyorum. Stabil çalışmazsa eski startTimer() metoduna geçeçceğiz.
-
-                          var track = snapshot.data?.track;
-                          var playerState = snapshot.data;
-                          firestoreDatabaseService.updateActiveStatus();
-
-                          print(
-                              "URL of the Image of the current track: ${playerState?.track?.linkedFromUri.toString()}");
-
-                          print(
-                              "URL of the Image of the current track: ${playerState?.track?.imageUri.toString()}");
-
-                          // _startTimer();
-
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          }
-
-                          if (snapshot.hasData) {
-                            //TODO: Aşağıya bir şekilde stream entegre et.
-                            return Column(
-                              children: <Widget>[
-                                SizedBox(
-                                  height: screenHeight / 600,
-                                ),
-                                // FutureBuilder(
-                                //   future: SpotifySdk.getImage(
-                                //     imageUri: track!.imageUri,
-                                //     dimension: ImageDimension.large,
-                                //   ),
-                                //   builder: (BuildContext context,
-                                //       AsyncSnapshot<Uint8List?> snapshot) {
-                                //     if (snapshot.hasData) {
-                                //       return Padding(
-                                //         padding: EdgeInsets.only(
-                                //             top:
-                                //                 MediaQuery.of(context).size.height /
-                                //                     11),
-                                //         child: Image.memory(snapshot.data!),
-                                //       );
-                                //     } else {
-                                //       return const Center(
-                                //           child: CircularProgressIndicator());
-                                //     }
-                                //   },
-                                // ),
-                                Text(
-                                  '${snapshot.data!.track!.artist.name} - ${snapshot.data!.track!.name} ',
-                                  style: const TextStyle(fontSize: 22),
-                                ),
-                              ],
-                            );
-                          } else {
-                            return Center(child: CircularProgressIndicator());
-                          }
-                        },
-                      ),
-                      FutureBuilder<SpotifyArtistsResponse>(
-                        future: _futureArtists,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            return Center(
-                                child: Text('Error: ${snapshot.error}'));
-                          } else if (snapshot.hasData) {
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: snapshot.data!.items.length,
-                              itemBuilder: (context, index) {
-                                final artist = snapshot.data!.items[index];
-                                return ListTile(
-                                  leading: Image.network(
-                                    artist.images.isNotEmpty
-                                        ? artist.images[0].url
-                                        : '',
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  title: Text(artist.name),
-                                  subtitle:
-                                      Text('Popularity: ${artist.popularity}'),
-                                  onTap: () {
-                                    // Handle artist item tap if needed
-                                  },
-                                );
-                              },
-                            );
-                          } else {
-                            return Center(child: Text('No data available'));
-                          }
-                        },
-                      ),
-                      Divider(
-                        thickness: 2,
-                        color: Colors.black,
-                      ),
-                      // ******************** Top Tracks Section **********************
-                      FutureBuilder<List<SpotifyTrack>>(
-                        future: _futureTracks,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            return Center(
-                                child: Text('Error: ${snapshot.error}'));
-                          } else if (snapshot.hasData) {
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: snapshot.data!.length,
-                              itemBuilder: (context, index) {
-                                final track = snapshot.data![index];
-                                return ListTile(
-                                  leading: Image.network(
-                                    track.album.images.isNotEmpty
-                                        ? track.album.images[0].url
-                                        : '',
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  title: Text(track.name),
-                                  subtitle: Text(track.artists
-                                      .map((artist) => artist.name)
-                                      .join(', ')),
-                                  onTap: () {
-                                    // TODO: Apply URL Launcher to play the song.
-                                  },
-                                );
-                              },
-                            );
-                          } else {
-                            return Center(child: Text('No data available'));
-                          }
-                        },
-                      ),
-                    ],
-                  ),
+              );
+            }).toList(),
+          ),
+        ),
+        Positioned(
+          bottom: 20,
+          left: 20,
+          right: 20,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                userData.name ?? currentUser?.displayName ?? 'No Name',
+                style: GoogleFonts.poppins(
+                  fontSize: 32.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
-              )
-            : CircularProgressIndicator());
+              ),
+              SizedBox(height: 8),
+              Text(
+                userData.majorInfo ?? "No major info",
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  color: Colors.white.withOpacity(0.8),
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                userData.biography ?? "No biography available.",
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: Colors.white.withOpacity(0.7),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          top: 40,
+          right: 20,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileSettings()));
+            },
+            child: Hero(
+              tag: "Profile Screen",
+              child: Icon(Icons.settings, size: 30.sp, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrentTrack() {
+    return StreamBuilder<PlayerState>(
+      stream: SpotifySdk.subscribePlayerState(),
+      builder: (BuildContext context, AsyncSnapshot<PlayerState> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator(color: Colors.yellow));
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.white)));
+        }
+        if (!snapshot.hasData || snapshot.data?.track == null) {
+          return SizedBox.shrink();
+        }
+
+        final track = snapshot.data!.track!;
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          color: Colors.yellow.withOpacity(0.1),
+          child: Row(
+            children: [
+              Icon(Icons.music_note, color: Colors.yellow),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '${track.artist.name} - ${track.name}',
+                  style: TextStyle(color: Colors.white, fontSize: 16.sp),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTopArtists(SpotifyArtistsResponse artists) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.all(20),
+          child: Text(
+            'Top Artists',
+            style: TextStyle(color: Colors.yellow, fontSize: 24.sp, fontWeight: FontWeight.bold),
+          ),
+        ),
+        Container(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: artists.items.length,
+            itemBuilder: (context, index) {
+              final artist = artists.items[index];
+              return Container(
+                width: 100,
+                margin: EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundImage: NetworkImage(
+                        artist.images.isNotEmpty ? artist.images[0].url : '',
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      artist.name,
+                      style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTopTracks(List<SpotifyTrack> tracks) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.all(20),
+          child: Text(
+            'Top Tracks',
+            style: TextStyle(color: Colors.yellow, fontSize: 24.sp, fontWeight: FontWeight.bold),
+          ),
+        ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: tracks.length,
+          itemBuilder: (context, index) {
+            final track = tracks[index];
+            return ListTile(
+              leading: Image.network(
+                track.album.images.isNotEmpty ? track.album.images[0].url : '',
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Icon(Icons.error, color: Colors.yellow),
+              ),
+              title: Text(track.name, style: TextStyle(color: Colors.white)),
+              subtitle: Text(track.artists.map((artist) => artist.name).join(', '), style: TextStyle(color: Colors.white.withOpacity(0.7))),
+            );
+          },
+        ),
+      ],
+    );
   }
 }

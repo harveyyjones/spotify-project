@@ -30,7 +30,6 @@ class SteppersForClients extends StatelessWidget {
     return const MaterialApp(
       title: _title,
       home: Scaffold(
-        // appBar: AppBar(title: const Text(_title)),
         body: Center(
           child: SteppersForClientsWidget(),
         ),
@@ -50,61 +49,70 @@ class SteppersForClientsWidget extends StatefulWidget {
 FirestoreDatabaseService _firestore_database_service =
     FirestoreDatabaseService();
 String? downloadImageURL;
-File? _image;
+List<File> _images = [];
 User? user;
 
 class SteppersForClientsWidgetState extends State<SteppersForClientsWidget> {
-  final ImagePicker _picker = ImagePicker();
 
   Future<File?> cropImage(File imageFile) async {
     CroppedFile? croppedImage = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
     );
-    return File(croppedImage!.path);
+    return croppedImage != null ? File(croppedImage.path) : null;
   }
 
   Future pickImage(ImageSource source) async {
     try {
-      uploadImageToDatabase() async {
-        UploadTask? uploadTask;
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child("users")
-            .child(currentUser!.uid)
-            .child("profil.jpg");
-
-        uploadTask = ref.putFile(_image!);
-        var uri = await (uploadTask
-            .whenComplete(() => ref.getDownloadURL().then((value) {
-                  downloadImageURL = value;
-                  if (mounted) {
-                    setState(() {});
-                  }
-                })));
-        print("Profil fotosu URL'i : ${downloadImageURL}");
-      }
-
       final image = await ImagePicker().pickImage(source: source);
-      if (image == null) {
-        return;
-      } else {
-        File? img = File(image.path);
-        img = (await cropImage(img));
+      if (image == null) return;
+      
+      File? img = File(image.path);
+      img = await cropImage(img);
+      if (img != null) {
         setState(() {
-          _image = img;
+          _images.add(img!);
+          profilePhoto = img;
         });
-        uploadImageToDatabase();
       }
     } on PlatformException catch (e) {
       print(e.message);
     }
   }
 
+  Future uploadImagesToDatabase() async {
+    if (_images.isEmpty) return;
+
+    for (var i = 0; i < _images.length; i++) {
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child("users")
+          .child(currentUser!.uid)
+          .child("profile_$i.jpg");
+
+      UploadTask uploadTask = ref.putFile(_images[i]);
+      await uploadTask.whenComplete(() async {
+        String url = await ref.getDownloadURL();
+        if (i == 0) {
+          downloadImageURL = url;
+          await _firestore_database_service.updateProfilePhoto(downloadImageURL!);
+        }
+      });
+    }
+  }
+
+  void removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+      if (_images.isNotEmpty) {
+        profilePhoto = _images[0];
+      } else {
+        profilePhoto = null;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    @override
-    FirestoreDatabaseService _firestoreDatabaseService =
-        FirestoreDatabaseService();
     var _keyForStepper = GlobalKey();
     return SafeArea(
         child: Scaffold(
@@ -121,54 +129,12 @@ class SteppersForClientsWidgetState extends State<SteppersForClientsWidget> {
                         ),
                         TextButton(
                             onPressed: () async {
-                              const Duration(seconds: 4);
-                              if (downloadImageURL != null) {
-                                await _firestoreDatabaseService
-                                    .updateProfilePhoto(downloadImageURL!);
-
-                                // ignore: use_build_context_synchronously
-                                await Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => Home(),
-                                    ),
-                                    (route) => false);
-                              } else {
-                                callSnackbar(String error,
-                                    [Color? color, onVisible]) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(SnackBar(
-                                    behavior: SnackBarBehavior.floating,
-                                    margin: EdgeInsets.symmetric(
-                                        horizontal: 30.w, vertical: 30.h),
-                                    //padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                    backgroundColor: color ??
-                                        Color.fromARGB(255, 65, 221, 4),
-                                    duration: Duration(milliseconds: 500),
-                                    onVisible: onVisible,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    content: SizedBox(
-                                      width: 40.w,
-                                      height: 40.h,
-                                      child: Center(
-                                        child: Text(error,
-                                            style: const TextStyle(
-                                                color: Colors.white)),
-                                      ),
-                                    ),
-                                  ));
-                                }
-
-                                callSnackbar("Your account is created.");
-                              }
-                              Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => Home(),
-                                  ),
-                                  (route) => false);
+                              await uploadImagesToDatabase();
+                              // Navigate to the home page
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (context) => Home()),
+                                (Route<dynamic> route) => false,
+                              );
                             },
                             child: Text(
                               "Finish",
@@ -241,26 +207,52 @@ class SteppersForClientsWidgetState extends State<SteppersForClientsWidget> {
                     alignment: Alignment.center,
                     child: Column(
                       children: [
-                        CircleAvatar(
-                          backgroundImage:
-                              _image != null ? FileImage(_image!) : null,
-                          //backgroundColor: Colors.white,
-                          maxRadius: screenWidth / 3.3,
-                          minRadius: 20,
+                        GestureDetector(
+                          onTap: () => pickImage(ImageSource.gallery),
+                          child: Container(
+                            width: screenWidth / 1.5,
+                            height: screenWidth / 1.5,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: _images.isEmpty
+                                ? Icon(Icons.add_photo_alternate, size: 50)
+                                : GridView.builder(
+                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      crossAxisSpacing: 4,
+                                      mainAxisSpacing: 4,
+                                    ),
+                                    itemCount: _images.length,
+                                    itemBuilder: (context, index) {
+                                      return Stack(
+                                        children: [
+                                          Image.file(_images[index], fit: BoxFit.cover),
+                                          Positioned(
+                                            right: 0,
+                                            child: GestureDetector(
+                                              onTap: () => removeImage(index),
+                                              child: Container(
+                                                color: Colors.red,
+                                                child: Icon(Icons.close, color: Colors.white),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                          ),
                         ),
-                        SizedBox(
-                          height: screenHeight / 33,
-                        ),
-                        const Text(
-                          "Add a picture for your awesome profile!",
+                        SizedBox(height: screenHeight / 33),
+                        Text(
+                          "Add pictures for your awesome profile!",
                           style: TextStyle(fontSize: 28, color: Colors.black),
                         ),
+                        SizedBox(height: screenHeight / 33),
                         InkWell(
-                          onTap: () {
-                            pickImage(ImageSource.gallery);
-
-                            print("Image picker basıldı");
-                          },
+                          onTap: () => pickImage(ImageSource.gallery),
                           child: Container(
                             decoration: BoxDecoration(
                                 boxShadow: const [
@@ -301,7 +293,6 @@ List<Step> get stepList => <Step>[
         state: _index > 0 ? StepState.complete : StepState.indexed,
         title: const Text(''),
         content: Container(
-            // color: Colors.black,
             alignment: Alignment.center,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -311,7 +302,6 @@ List<Step> get stepList => <Step>[
                   child: Text(
                     "To help you complete your profile you should answer some quick questions.",
                     style: TextStyle(
-                        // fontFamily: fontFamilyJavanese,
                         fontSize: 30,
                         fontWeight: FontWeight.w400),
                   ),
@@ -333,3 +323,22 @@ List<Step> get stepList => <Step>[
             )),
       ),
     ];
+
+void callSnackbar(String message, BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    behavior: SnackBarBehavior.floating,
+    margin: EdgeInsets.symmetric(horizontal: 30.w, vertical: 30.h),
+    backgroundColor: Color.fromARGB(255, 65, 221, 4),
+    duration: Duration(milliseconds: 500),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    content: SizedBox(
+      width: 40.w,
+      height: 40.h,
+      child: Center(
+        child: Text(message, style: const TextStyle(color: Colors.white)),
+      ),
+    ),
+  ));
+}

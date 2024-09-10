@@ -240,7 +240,7 @@ class BusinessLogic {
       _loading = true;
 
       var result = await SpotifySdk.connectToSpotifyRemote(
-          clientId: clientId, redirectUrl: redirectURL);
+          clientId: 'b56ad9c2cf434b748466bb6adbb511ca', redirectUrl: 'https://www.rubycurehealthtourism.com/' );
       _businessLogic.setStatus(result
           ? 'connect to spotify successful'
           : 'connect to spotify failed');

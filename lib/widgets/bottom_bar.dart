@@ -22,13 +22,13 @@ class _BottomBarState extends State<BottomBar> {
   var _index = 0;
 // İlerde admin paneli gibi kullanırım.
   final List _pagesToNavigateToForClinicOwners = [
-    const Home(),
+     Home(),
     // OwnProfileScreen(),
     MessageScreen()
   ];
 
   final List _pagesToNavigateToForClients = [
-    const Home(),
+     Home(),
     const MatchesScreen(),
     OwnProfileScreenForClients(),
     MessageScreen()

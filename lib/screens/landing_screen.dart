@@ -86,12 +86,12 @@ class GeneralButton extends StatelessWidget {
     return InkWell(
       onTap: () async {
         try {
-          await _businessLogic.getAccessToken(clientId, redirectURL).then(
+          await _businessLogic.getAccessToken('b56ad9c2cf434b748466bb6adbb511ca', 'https://www.rubycurehealthtourism.com/' ).then(
               (value) => _businessLogic.connectToSpotifyRemote().then((value) {
-                    connected = true;
+                    var connected = true;
                     Navigator.of(context).push(MaterialPageRoute(
                       builder: (context) {
-                        return SteppersForClients();
+                        return RegisterPage();
                       },
                     ));
                   }));
