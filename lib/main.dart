@@ -1,27 +1,24 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:logger/logger.dart';
 import 'package:spotify_project/business/Spotify_Logic/constants.dart';
 import 'package:spotify_project/business/business_logic.dart';
 import 'package:spotify_project/screens/landing_screen.dart';
-import 'package:spotify_project/screens/steppers.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:spotify_project/business/Spotify_Logic/Models/top_playlists.dart';
 import 'package:spotify_project/business/Spotify_Logic/services/fetch_playlists.dart';
 
 import 'screens/quick_match_screen.dart';
 
-import 'package:http/http.dart' as http;
+
+import 'package:pay/pay.dart'; // Added import for ApplePayButton and GooglePayButton
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,18 +36,6 @@ void main() async {
   final businessLogic = BusinessLogic();
   await businessLogic.getAccessToken('b56ad9c2cf434b748466bb6adbb511ca', 'https://www.rubycurehealthtourism.com/');
   await businessLogic.connectToSpotifyRemote();
-
-  try {
-    Stripe.publishableKey = 'pk_test_51PvbvsP9evS8B1HZYQovuCob0GKGlKrqLFumzno3e8ozZFmEdFmcekKmaH6k8v9CHzw5nCn6b0GrxxfP24q5tF4o00jZbPSGuY';
-    await Stripe.instance.applySettings();
-  } catch (e) {
-    if (e is MissingPluginException) {
-      print('Stripe plugin not available: ${e.message}');
-      // Handle the case where Stripe is not available
-    } else {
-      print('Error initializing Stripe: $e');
-    }
-  }
 
   runApp(MyApp(businessLogic: businessLogic));
 }
@@ -117,6 +102,14 @@ class _EverythingState extends State<Everything> {
   bool _isPaymentComplete = false;
   bool _loading = false;
 
+  final _paymentItems = [
+    PaymentItem(
+      label: 'Total',
+      amount: '1.00',
+      status: PaymentItemStatus.final_price,
+    )
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -128,30 +121,14 @@ class _EverythingState extends State<Everything> {
     return await spotifyService.fetchPlaylists();
   }
 
-  Future<void> _handlePayment() async {
-    setState(() => _loading = true);
-    try {
-      final clientSecret = await _createPaymentIntent();
-      await Stripe.instance.confirmPayment(
-        paymentIntentClientSecret: clientSecret,
-        data: PaymentMethodParams.card(
-          paymentMethodData: PaymentMethodData(),
-        ),
-      );
-      setState(() => _isPaymentComplete = true);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment failed: $e')),
-      );
-    } finally {
-      setState(() => _loading = false);
-    }
+  void onApplePayResult(paymentResult) {
+    // Send the resulting Apple Pay token to your server / PSP
+    setState(() => _isPaymentComplete = true);
   }
 
-  Future<String> _createPaymentIntent() async {
-    // TODO: Implement server-side logic to create a payment intent
-    await Future.delayed(const Duration(seconds: 2));
-    return 'mock_client_secret';
+  void onGooglePayResult(paymentResult) {
+    // Send the resulting Google Pay token to your server / PSP
+    setState(() => _isPaymentComplete = true);
   }
 
   @override
@@ -179,7 +156,7 @@ class _EverythingState extends State<Everything> {
 
   Widget _buildQuickMatchButton() {
     return GestureDetector(
-       onTap: _navigateToQuickMatch, // _isPaymentComplete ? _navigateToQuickMatch : _handlePayment,
+      onTap: _isPaymentComplete ? _navigateToQuickMatch : null,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: ScreenUtil().setWidth(36)),
         child: Container(
@@ -197,76 +174,66 @@ class _EverythingState extends State<Everything> {
               )
             ],
           ),
-          child: Center(
-            child: Text(
-              _isPaymentComplete ? "Quick Match" : "Pay to Unlock",
-              style: GoogleFonts.alata(
-                textStyle: TextStyle(
-                  fontSize: 48.sp,
-                  color: Colors.white,
-                  letterSpacing: .5,
+          child: _isPaymentComplete
+              ? Center(
+                  child: Text(
+                    "Quick Match",
+                    style: GoogleFonts.alata(
+                      textStyle: TextStyle(
+                        fontSize: 48.sp,
+                        color: Colors.white,
+                        letterSpacing: .5,
+                      ),
+                    ),
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    FutureBuilder<PaymentConfiguration>(
+                      future: PaymentConfiguration.fromAsset('default_payment_profile_apple_pay.json'),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return ApplePayButton(
+                            paymentConfiguration: snapshot.data!,
+                            paymentItems: _paymentItems,
+                            style: ApplePayButtonStyle.black,
+                            type: ApplePayButtonType.buy,
+                            margin: const EdgeInsets.only(top: 15.0),
+                            onPaymentResult: onApplePayResult,
+                            loadingIndicator: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        } else {
+                          return CircularProgressIndicator();
+                        }
+                      },
+                    ),
+                    FutureBuilder<PaymentConfiguration>(
+                      future: PaymentConfiguration.fromAsset('default_payment_profile_google_pay.json'),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return GooglePayButton(
+                            paymentConfiguration: snapshot.data!,
+                            paymentItems: _paymentItems,
+                            type: GooglePayButtonType.pay,
+                            margin: const EdgeInsets.only(top: 15.0),
+                            onPaymentResult: onGooglePayResult,
+                            loadingIndicator: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        } else {
+                          return CircularProgressIndicator();
+                        }
+                      },
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          ),
         ),
       ),
     );
-  }
-
-  // Steps to implement Stripe payment:
-  // 1. Set up a Stripe account and get your publishable key
-  // 2. Add the flutter_stripe package to your pubspec.yaml
-  // 3. Initialize Stripe in your main() function
-  // 4. Create a backend server to handle payment intents
-  // 5. Implement the payment flow in your app
-
-  // Example of initializing Stripe (add this to your main() function):
-  // Stripe.publishableKey = 'your_publishable_key_here';
-  // await Stripe.instance.applySettings();
-
-  Future<void> handlePayment() async {
-    setState(() => _loading = true);
-    try {
-      // Create a payment intent on your server
-      final paymentIntentResult = await createPaymentIntent('1', 'PLN');
-      
-      // Confirm the payment with Stripe
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: paymentIntentResult['client_secret'],
-          style: ThemeMode.dark,
-          merchantDisplayName: 'Your App Name',
-        ),
-      );
-      await Stripe.instance.presentPaymentSheet();
-      
-      // Payment successful
-      setState(() => _isPaymentComplete = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment successful')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
-
-  Future<Map<String, dynamic>> createPaymentIntent(String amount, String currency) async {
-    // This should be implemented on your backend server
-    // For testing, you can use a local server or a service like Firebase Cloud Functions
-    const String url = 'https://your-backend-url.com/create-payment-intent';
-    final response = await http.post(
-      Uri.parse(url),
-      body: {
-        'amount': amount,
-        'currency': currency,
-      },
-    );
-    return json.decode(response.body);
   }
 
   void _navigateToQuickMatch() {
