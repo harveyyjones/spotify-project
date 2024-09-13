@@ -38,47 +38,52 @@ class _MessageScreenState extends State<MessageScreen> {
             children: [
               // ******************** LIKED PEOPLE DISPLAY *************************
               FutureBuilder<List<UserModel>>(
-                future: firestoreDatabaseService.getLikedPeople(),
+                future: firestoreDatabaseService.getLikedPeople(), // Update this method
                 builder: (context, AsyncSnapshot<List<UserModel>> snapshot) {
                   if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          top: screenHeight / 35, bottom: screenHeight / 50),
-                      child: Container(
-                        width: screenWidth / 1.1,
-                        height: screenHeight / 8,
-                        color: Color.fromARGB(0, 211, 176, 73),
-                        child: ListView.builder(
-                          physics: const ScrollPhysics(
-                              parent: AlwaysScrollableScrollPhysics()),
-                          scrollDirection: Axis.horizontal,
-                          itemCount: snapshot.data?.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: EdgeInsets.only(left: screenWidth / 60),
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.of(context).push(CupertinoPageRoute(
-                                    builder: (context) => ChatScreen(
-                                        snapshot.data![index].userId.toString(),
-                                        snapshot.data![index].profilePhotos[0],
-                                        snapshot.data![index].name.toString()),
-                                  ));
-                                },
-                                child: CircleAvatar(
-                                  minRadius: 30,
-                                  maxRadius: 70.sp,
-                                  foregroundImage: NetworkImage(
-                                      snapshot.data![index].profilePhotos[0]),
-                                ),
+                    return Container(
+                      height: 100.h,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          final user = snapshot.data![index];
+                          return Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(CupertinoPageRoute(
+                                  builder: (context) => ChatScreen(
+                                    user.userId ?? '',
+                                    user.profilePhotoURL ?? '',
+                                    user.name ?? '',
+                                  ),
+                                ));
+                              },
+                              child: Column(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 30.r,
+                                    backgroundImage: user.profilePhotoURL != null
+                                        ? NetworkImage(user.profilePhotoURL!)
+                                        : null,
+                                    backgroundColor: Colors.grey[300],
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    user.name ?? '',
+                                    style: TextStyle(fontSize: 12.sp),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   } else {
-                    return SizedBox(height: 1); // Small SizedBox when no liked people
+                    return SizedBox(height: 1.h); // Small SizedBox when no liked people
                   }
                 },
               ),

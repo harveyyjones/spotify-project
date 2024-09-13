@@ -11,6 +11,7 @@ class UserModel {
   String? clinicName;
   String? phoneNumber;
   bool? clinicOwner;
+  String? profilePhotoURL; // New property for single profile photo URL
   List<String> profilePhotos; // List to store multiple profile photos
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -21,6 +22,7 @@ class UserModel {
     this.eMail,
     this.majorInfo,
     this.clinicLocation,
+    this.profilePhotoURL, // Add this parameter
     this.profilePhotos = const [], // Default to an empty list
     this.biography,
     this.clinicName,
@@ -41,6 +43,7 @@ class UserModel {
       "name": name,
       "clinicName": clinicName,
       "userId": userId,
+      "profilePhotoURL": profilePhotoURL, // Add this line
       "profilePhotos": profilePhotos, // Store list of photos
       "updatedAt": updatedAt ?? FieldValue.serverTimestamp(),
       "phoneNumber": phoneNumber,
@@ -54,6 +57,7 @@ class UserModel {
         eMail = map["eMail"],
         name = map["name"],
         majorInfo = map["majorInfo"],
+        profilePhotoURL = map["profilePhotoURL"], // Add this line
         profilePhotos = List<String>.from(map["profilePhotos"] ?? []),
         clinicLocation = map["clinicLocation"],
         biography = map["biography"],

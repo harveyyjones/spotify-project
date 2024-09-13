@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -7,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
 import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/screens/chat_screen.dart';
-import 'package:spotify_project/screens/matches_screen.dart';
 import 'package:swipe_cards/draggable_card.dart';
 import 'package:swipe_cards/swipe_cards.dart';
 
@@ -96,12 +94,19 @@ class _MyHomePageState extends State<SwipeCardWidgetForQuickMatch> {
                       width: screenWidth,
                       color: const Color.fromARGB(255, 0, 0, 0),
                       alignment: Alignment.center,
-                      child: Image(
-                          width: screenWidth,
-                          height: screenHeight,
-                          fit: BoxFit.cover,
-                          image: NetworkImage(
-                              widget.snapshotData[index].profilePhotoURL)),
+                      child: widget.snapshotData[index].profilePhotoURL.isNotEmpty
+                          ? Image(
+                              width: screenWidth,
+                              height: screenHeight,
+                              fit: BoxFit.cover,
+                              image: NetworkImage(
+                                  widget.snapshotData[index].profilePhotoURL),
+                            )
+                          : Icon(
+                              Icons.person,
+                              size: 150,
+                              color: Colors.white,
+                            ),
                     ),
                     Positioned(
                       left: screenWidth / 11,

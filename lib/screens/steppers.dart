@@ -82,6 +82,9 @@ class SteppersForClientsWidgetState extends State<SteppersForClientsWidget> {
   Future uploadImagesToDatabase() async {
     if (_images.isEmpty) return;
 
+    List<String> profilePhotos = [];
+    String? profilePhotoURL;
+
     for (var i = 0; i < _images.length; i++) {
       final ref = FirebaseStorage.instance
           .ref()
@@ -93,11 +96,18 @@ class SteppersForClientsWidgetState extends State<SteppersForClientsWidget> {
       await uploadTask.whenComplete(() async {
         String url = await ref.getDownloadURL();
         if (i == 0) {
-          downloadImageURL = url;
-          await _firestore_database_service.updateProfilePhoto(downloadImageURL!);
+          profilePhotoURL = url;
+        } else {
+          profilePhotos.add(url);
         }
       });
     }
+
+    // Update user data with profilePhotoURL and profilePhotos
+    await _firestore_database_service.updateUserProfileImages(
+      profilePhotoURL: profilePhotoURL,
+      profilePhotos: profilePhotos,
+    );
   }
 
   void removeImage(int index) {

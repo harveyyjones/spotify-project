@@ -179,7 +179,7 @@ class _EverythingState extends State<Everything> {
 
   Widget _buildQuickMatchButton() {
     return GestureDetector(
-      onTap: _isPaymentComplete ? _navigateToQuickMatch : _handlePayment,
+       onTap: _navigateToQuickMatch, // _isPaymentComplete ? _navigateToQuickMatch : _handlePayment,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: ScreenUtil().setWidth(36)),
         child: Container(

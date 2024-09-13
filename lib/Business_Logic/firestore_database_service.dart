@@ -543,20 +543,35 @@ class FirestoreDatabaseService {
 
   Future<List<UserModel>> getLikedPeople() async {
     List<UserModel> likedPeople = [];
-    final previousMatchesRef = await _instance
+  
+    // Get liked people from quickMatchesList
+    final quickMatchesRef = await _instance
         .collection("matches")
         .doc(currentUser!.uid)
         .collection("quickMatchesList")
-        .where("isLiked", isNotEqualTo: null)
-        .orderBy("timeStamp", descending: false)
+        .where("isLiked", isEqualTo: true)
         .get();
 
-    for (var item in previousMatchesRef.docs) {
-      if (true == item["isLiked"]) {
-        UserModel userModel = await getUserDataForDetailPage(item["uid"]);
-        likedPeople.add(userModel);
-      }
+    // Get liked people from previousMatchesList
+    final previousMatchesRef = await _instance
+        .collection("matches")
+        .doc(currentUser!.uid)
+        .collection("previousMatchesList")
+        .where("isLiked", isEqualTo: true)
+        .get();
+
+    // Process quickMatchesList
+    for (var item in quickMatchesRef.docs) {
+      UserModel userModel = await getUserDataForDetailPage(item["uid"]);
+      likedPeople.add(userModel);
     }
+
+    // Process previousMatchesList
+    for (var item in previousMatchesRef.docs) {
+      UserModel userModel = await getUserDataForDetailPage(item["uid"]);
+      likedPeople.add(userModel);
+    }
+
     return likedPeople;
   }
 
@@ -582,6 +597,21 @@ class FirestoreDatabaseService {
     } catch (e) {
       print("Spotify is not active or disconnected: $e");
     }
+  }
+
+  Future<void> updateUserProfileImages({
+    String? profilePhotoURL,
+    List<String>? profilePhotos,
+  }) async {
+    // Implement the logic to update user profile images in Firestore
+    // For example:
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .update({
+      'profilePhotoURL': profilePhotoURL,
+      'profilePhotos': profilePhotos,
+    });
   }
 }
 
