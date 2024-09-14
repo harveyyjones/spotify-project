@@ -1,10 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
-import 'package:spotify_project/Helpers/helpers.dart';
 import 'package:spotify_project/business/Spotify_Logic/Models/top_10_track_model.dart';
 import 'package:spotify_project/business/Spotify_Logic/constants.dart';
 import 'package:spotify_project/business/Spotify_Logic/services/fetch_artists.dart';
@@ -14,7 +11,6 @@ import 'package:spotify_project/screens/register_page.dart';
 import 'package:spotify_project/widgets/bottom_bar.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class OwnProfileScreenForClients extends StatefulWidget {
   OwnProfileScreenForClients({Key? key}) : super(key: key);
@@ -31,7 +27,8 @@ class _OwnProfileScreenForClientsState
   final FirestoreDatabaseService _serviceForSnapshot =
       FirestoreDatabaseService();
   late Future<Map<String, dynamic>> _combinedFuture;
-  Map<String, dynamic>? _cachedData;
+  static Map<String, dynamic>? _cachedData;
+  DateTime? _lastFetchTime;
   int _currentImageIndex = 0;
 
   @override
@@ -41,8 +38,12 @@ class _OwnProfileScreenForClientsState
   }
 
   Future<Map<String, dynamic>> _loadAllData() async {
-    if (_cachedData != null) {
-      return _cachedData!;
+    // Check if cached data exists and is less than 5 minutes old
+    if (_cachedData != null && _lastFetchTime != null) {
+      final difference = DateTime.now().difference(_lastFetchTime!);
+      if (difference.inMinutes < 5) {
+        return _cachedData!;
+      }
     }
 
     final userData = await _serviceForSnapshot.getUserData();
@@ -54,6 +55,7 @@ class _OwnProfileScreenForClientsState
       'artists': artists,
       'tracks': tracks,
     };
+    _lastFetchTime = DateTime.now();
 
     return _cachedData!;
   }
@@ -174,8 +176,8 @@ class _OwnProfileScreenForClientsState
               Text(
                 userData.name ?? currentUser?.displayName ?? 'No Name',
                 style: GoogleFonts.poppins(
-                  fontSize: 32.sp,
-                  color: Colors.white,
+                  fontSize: 45.sp,
+                  color: const Color.fromARGB(255, 0, 0, 0),
                   fontWeight: FontWeight.bold,
                 ),
               ),

@@ -39,14 +39,18 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
       _matchData = await _firestoreDatabaseService.getUserDataViaUId();
 
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {  // Add this check
+        setState(() {
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = "Error initializing user data: $e";
-        _isLoading = false;
-      });
+      if (mounted) {  // Add this check
+        setState(() {
+          _errorMessage = "Error initializing user data: $e";
+          _isLoading = false;
+        });
+      }
     }
   }
 

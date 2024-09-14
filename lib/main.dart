@@ -17,11 +17,28 @@ import 'package:spotify_project/business/Spotify_Logic/services/fetch_playlists.
 
 import 'screens/quick_match_screen.dart';
 
-
 import 'package:pay/pay.dart'; // Added import for ApplePayButton and GooglePayButton
+
+import 'package:workmanager/workmanager.dart';
+import 'package:spotify_project/Business_Logic/firestore_database_service.dart';
+
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    switch (task) {
+      case 'getUserDatasToMatch':
+        final firestoreService = FirestoreDatabaseService();
+        // You'll need to implement a way to get the current song name
+        String? currentSongName = await firestoreService.returnCurrentlyListeningMusicName();
+        await firestoreService.getUserDatasToMatch(currentSongName, true);
+        break;
+    }
+    return Future.value(true);
+  });
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   await Firebase.initializeApp(
     options: const FirebaseOptions(
       apiKey: "AIzaSyAeu7KYeIdCUZ8DZ0oCjjzK15rVdilwKO8",
@@ -32,10 +49,29 @@ void main() async {
     ),
   );
 
+  await Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: true,
+  );
+  
+  await Workmanager().registerPeriodicTask(
+    "getUserDatasToMatch",
+    "getUserDatasToMatch",
+    frequency: Duration(minutes: 15),
+    constraints: Constraints(
+      networkType: NetworkType.connected,
+    ),
+  );
+
   // Initialize Spotify connection
   final businessLogic = BusinessLogic();
-  await businessLogic.getAccessToken('b56ad9c2cf434b748466bb6adbb511ca', 'https://www.rubycurehealthtourism.com/');
-  await businessLogic.connectToSpotifyRemote();
+  try {
+    await businessLogic.getAccessToken('b56ad9c2cf434b748466bb6adbb511ca', 'https://www.rubycurehealthtourism.com/');
+    await businessLogic.connectToSpotifyRemote();
+  } catch (e) {
+    print('Error connecting to Spotify: $e');
+    // You might want to show an error dialog or handle the error in some way
+  }
 
   runApp(MyApp(businessLogic: businessLogic));
 }
@@ -101,6 +137,7 @@ class _EverythingState extends State<Everything> {
   late Future<List<Playlist>> futurePlaylists;
   bool _isPaymentComplete = false;
   bool _loading = false;
+  final FirestoreDatabaseService firestoreDatabaseService = FirestoreDatabaseService();
 
   final _paymentItems = [
     PaymentItem(
@@ -114,6 +151,7 @@ class _EverythingState extends State<Everything> {
   void initState() {
     super.initState();
     futurePlaylists = fetchPlaylists();
+    firestoreDatabaseService.updateActiveStatus();
   }
 
   Future<List<Playlist>> fetchPlaylists() async {
@@ -245,7 +283,15 @@ class _EverythingState extends State<Everything> {
       stream: SpotifySdk.subscribePlayerState(),
       builder: (context, snapshot) {
         final track = snapshot.data?.track;
-        if (track == null) return const SizedBox.shrink();
+        if (track == null) {
+          print('No track data available');
+          return const SizedBox.shrink();
+        }
+
+        // Call updateActiveStatus() whenever the player state changes
+        print('Updating active status for track: ${track.name}');
+        firestoreDatabaseService.updateActiveStatus();
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Text(
