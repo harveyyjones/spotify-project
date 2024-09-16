@@ -102,7 +102,7 @@ class _MyHomePageState extends State<SwipeCardWidgetForQuickMatch> {
                               image: NetworkImage(
                                   widget.snapshotData[index].profilePhotoURL),
                             )
-                          : Icon(
+                          : const Icon(
                               Icons.person,
                               size: 150,
                               color: Colors.white,

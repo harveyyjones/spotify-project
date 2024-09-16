@@ -575,6 +575,41 @@ class FirestoreDatabaseService {
     return likedPeople;
   }
 
+  Future<List<UserModel>> getPeopleWhoLikedMe() async {
+    List<UserModel> peopleWhoLikedMe = [];
+  
+    // Get all users
+    QuerySnapshot usersSnapshot = await _instance.collection("users").get();
+
+    for (var userDoc in usersSnapshot.docs) {
+      String userId = userDoc.id;
+      
+      // Check if this user has liked the current user in quickMatchesList
+      DocumentSnapshot quickMatchDoc = await _instance
+          .collection("matches")
+          .doc(userId)
+          .collection("quickMatchesList")
+          .doc(currentUser!.uid)
+          .get();
+
+      // Check if this user has liked the current user in previousMatchesList
+      DocumentSnapshot previousMatchDoc = await _instance
+          .collection("matches")
+          .doc(userId)
+          .collection("previousMatchesList")
+          .doc(currentUser!.uid)
+          .get();
+
+      if ((quickMatchDoc.exists && quickMatchDoc.get('isLiked') == true) ||
+          (previousMatchDoc.exists && previousMatchDoc.get('isLiked') == true)) {
+        UserModel userModel = await getUserDataForDetailPage(userId);
+        peopleWhoLikedMe.add(userModel);
+      }
+    }
+
+    return peopleWhoLikedMe;
+  }
+
   void updateActiveStatus({snapshot}) async {
     try {
       var isActive = await SpotifySdk.isSpotifyAppActive;

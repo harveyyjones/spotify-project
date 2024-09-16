@@ -6,6 +6,7 @@ import 'package:spotify_project/main.dart';
 import 'package:spotify_project/screens/matches_screen.dart';
 import 'package:spotify_project/screens/message_box.dart';
 import 'package:spotify_project/screens/own_profile_screens_for_clients.dart';
+import 'package:spotify_project/screens/likes_screen.dart'; // Add this import
 
 class BottomBar extends StatefulWidget {
   int selectedIndex;
@@ -31,7 +32,8 @@ class _BottomBarState extends State<BottomBar> {
      Home(),
     const MatchesScreen(),
     OwnProfileScreenForClients(),
-    MessageScreen()
+    MessageScreen(),
+    LikesScreen(), // Add this new screen
   ];
 
   @override
@@ -97,6 +99,17 @@ class _BottomBarState extends State<BottomBar> {
                   icon: Icon(
                     size: 50.sp,
                     Icons.message,
+                    color: Colors.black,
+                  )),
+              BottomNavigationBarItem(
+                  activeIcon: Icon(
+                    Icons.favorite,
+                    size: 60.sp,
+                  ),
+                  label: "Likes",
+                  icon: Icon(
+                    size: 50.sp,
+                    Icons.favorite_border,
                     color: Colors.black,
                   )),
             ]),
